@@ -40,7 +40,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private OAuth2UserInfo getUserInfo(String registrationId, Map<String, Object> attributes) {
         return switch (registrationId.toLowerCase()) {
             case "kakao" -> new KakaoUserInfo(attributes);
-            // 추후에 구글, 네이버 로그인 같은 것이 생기면 추가
+            case "naver" -> new NaverUserInfo(attributes);
             default -> throw new OAuth2AuthenticationException("Unsupported social type: " + registrationId);
         };
     }
