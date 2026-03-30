@@ -21,9 +21,19 @@ public class User {
     @Column(name = "provider_id", nullable = false)
     private String providerId;
 
+    @Column(name = "email", nullable = false)
+    private String email;
+
     @Column(name = "nick_name", nullable = false)
     private String nickName;
 
-    @Column(name = "email", nullable = false)
-    private String email;
+    // ---------- 메서드 ----------
+    public static User create(UserProvider provider, String providerId, String email, String nickName) {
+        return User.builder()
+                .provider(provider)
+                .providerId(providerId)
+                .email(email)
+                .nickName(nickName)
+                .build();
+    }
 }

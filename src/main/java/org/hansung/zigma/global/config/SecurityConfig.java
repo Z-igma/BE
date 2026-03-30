@@ -3,6 +3,9 @@ package org.hansung.zigma.global.config;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.global.exception.CustomAuthenticationEntryPoint;
 import org.hansung.zigma.global.jwt.JwtAuthenticationFilter;
+import org.hansung.zigma.global.oauth.CookieOAuth2AuthorizationRequestRepository;
+import org.hansung.zigma.global.oauth.CustomOAuth2UserService;
+import org.hansung.zigma.global.oauth.OAuth2LoginSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,6 +22,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final CookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -27,7 +33,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 비활성화
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS 프리플라이트 요청 허용
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() // OAuth2 로그인 URL
                         .anyRequest().authenticated() // 그 외 나머지는 인증 필요
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestRepository(cookieOAuth2AuthorizationRequestRepository)
+                        )
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthenticationEntryPoint)) // 401, 토큰 만료
