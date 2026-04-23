@@ -53,7 +53,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             provider,
                             userInfo.getProviderId(),
                             userInfo.getEmail(),
-                            userInfo.getNickname()
+                            userInfo.getNickname(),
+                            userInfo.getProfileImageUrl()
                     );
                     return userRepository.save(user);
                 });
