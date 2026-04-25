@@ -5,6 +5,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# Spring secret config
+application-secret.properties
+
 ### STS ###
 .apt_generated
 .classpath
