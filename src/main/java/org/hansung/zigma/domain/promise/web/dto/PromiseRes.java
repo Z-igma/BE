@@ -12,8 +12,8 @@ public record PromiseRes(
         String title,
         PlanStatus planStatus,
         LocalDateTime promisedAt,
-        String dayOfWeek
-        // Integer memberCount // 멤버 수는 추후 구현 시 추가
+        String dayOfWeek,
+        Integer memberCount
 ) {
     public static PromiseRes from(Promise plan) {
         String dayOfWeek = plan.getPromisedAt()
@@ -25,7 +25,8 @@ public record PromiseRes(
                 plan.getTitle(),
                 plan.getStatus(),
                 plan.getPromisedAt(),
-                dayOfWeek
+                dayOfWeek,
+                plan.getPromiseMembers().size()
         );
     }
 }

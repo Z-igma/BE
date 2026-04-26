@@ -6,6 +6,8 @@ import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
 import org.hansung.zigma.global.entity.BaseEntity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -39,6 +41,10 @@ public class Promise extends BaseEntity {
     @Column(nullable = false)
     private PlanStatus status; // 약속 상태
 
+    @OneToMany(mappedBy = "promise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PromiseMember> promiseMembers = new ArrayList<>();
+
     // ------------------------------ 메서드 ------------------------------
     public static Promise toEntity(PromiseCreateReq req) {
         // endsAt이 null이면 약속 시간(promisedAt)의 1시간 전으로 설정
@@ -56,4 +62,9 @@ public class Promise extends BaseEntity {
                 .build();
     }
 
+    // 양방향 연관관계 편의 메서드
+    public void setPromiseMember(PromiseMember promiseMember) {
+        this.promiseMembers.add(promiseMember);
+        promiseMember.setPromise(this);
+    }
 }
