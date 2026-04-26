@@ -4,16 +4,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.service.PromiseService;
 import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
 import org.hansung.zigma.global.response.SuccessResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,5 +34,20 @@ public class PromiseController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(SuccessResponse.created(res));
+    }
+
+    @GetMapping
+    public ResponseEntity<SuccessResponse<PromiseListRes>> getAllPromises(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(required = false) String cursor, // 무한 스크롤 커서
+            @RequestParam(defaultValue = "10") int size    // 한 페이지당 개수
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        PromiseListRes res = promiseService.getPromises(userId, cursor, size);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.from(res));
     }
 }
