@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -36,7 +37,7 @@ public class PromiseServiceImpl implements PromiseService {
                 .orElseThrow(UserNotFoundException::new);
 
         Promise promise = Promise.toEntity(req);
-        Validator.validatePlanDates(promise.getPromisedAt(), promise.getEndAt());
+        Validator.validatePlanDates(promise.getPromisedAt(), promise.getEndAt(), LocalDateTime.now());
 
         PromiseMember host = PromiseMember.createMember(user, promise, Role.HOST);
         promise.setPromiseMember(host);

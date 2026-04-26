@@ -13,9 +13,7 @@ public class Validator {
      * 2. 오늘 < 투표 종료 날짜
      * 3. 투표 종료 날짜 < 약속 날짜
      */
-    public static void validatePlanDates(LocalDateTime promisedAt, LocalDateTime endAt) {
-        LocalDateTime now = LocalDateTime.now();
-
+    public static void validatePlanDates(LocalDateTime promisedAt, LocalDateTime endAt, LocalDateTime now) {
         // 약속 날짜가 오늘보다 미래인지 확인
         if (promisedAt.isBefore(now)) {
             throw new PromiseInvalidPromiseTimeException();
