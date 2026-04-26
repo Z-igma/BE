@@ -1,0 +1,59 @@
+package org.hansung.zigma.domain.promise.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
+import org.hansung.zigma.global.entity.BaseEntity;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "promise")
+public class Promise extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String title; // 약속명
+
+    @Column(name = "promised_at", nullable = false)
+    private LocalDateTime promisedAt; // 약속 날짜 및 시간
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Category category; // 약속 주제
+
+    @Builder.Default
+    @Column(name = "is_multiple_voting", nullable = false)
+    private Boolean isMultipleVoting = false; // 장소 복수 투표 여부
+
+    @Column(name = "end_at", nullable = false)
+    private LocalDateTime endAt; // 투표 종료 시간
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PlanStatus status; // 약속 상태
+
+    // ------------------------------ 메서드 ------------------------------
+    public static Promise toEntity(PromiseCreateReq req) {
+        // endsAt이 null이면 약속 시간(promisedAt)의 1시간 전으로 설정
+        LocalDateTime finalEndAt = (req.getEndAt() != null)
+                ? req.getEndAt()
+                : req.getPromisedAt().minusHours(1);
+
+        return Promise.builder()
+                .title(req.getTitle())
+                .promisedAt(req.getPromisedAt())
+                .category(Category.from(req.getCategory()))
+                .endAt(finalEndAt)
+                .isMultipleVoting(req.getIsMultipleVoting() != null ? req.getIsMultipleVoting() : false)
+                .status(PlanStatus.PENDING)
+                .build();
+    }
+
+}
