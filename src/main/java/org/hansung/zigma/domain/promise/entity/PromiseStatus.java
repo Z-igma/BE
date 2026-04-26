@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum PlanStatus {
+public enum PromiseStatus {
     PENDING("장소 미정"),     // 회색 배경
     PROCEEDING("진행 중"),   // 주황색 배경
     CONFIRMED("확정 완료");   // 보라색 배경
@@ -20,12 +20,12 @@ public enum PlanStatus {
     }
 
     @JsonCreator
-    public static PlanStatus from(String value) {
+    public static PromiseStatus from(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
 
-        for (PlanStatus status : PlanStatus.values()) {
+        for (PromiseStatus status : PromiseStatus.values()) {
             if (status.getValue().equals(value)) {
                 return status;
             }

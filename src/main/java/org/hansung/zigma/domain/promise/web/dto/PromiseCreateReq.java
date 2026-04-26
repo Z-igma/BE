@@ -3,7 +3,6 @@ package org.hansung.zigma.domain.promise.web.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import org.hansung.zigma.domain.promise.entity.Category;
 
 import java.time.LocalDateTime;
 

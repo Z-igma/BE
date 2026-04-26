@@ -23,7 +23,7 @@ public class PromiseController {
     private final PromiseService promiseService;
 
     @PostMapping
-    public ResponseEntity<SuccessResponse<PromiseRes>> createProgram(
+    public ResponseEntity<SuccessResponse<PromiseRes>> createPromise(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody @Valid PromiseCreateReq req
     ) {

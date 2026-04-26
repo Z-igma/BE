@@ -39,7 +39,7 @@ public class Promise extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PlanStatus status; // 약속 상태
+    private PromiseStatus status; // 약속 상태
 
     @OneToMany(mappedBy = "promise", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -58,7 +58,7 @@ public class Promise extends BaseEntity {
                 .category(Category.from(req.getCategory()))
                 .endAt(finalEndAt)
                 .isMultipleVoting(req.getIsMultipleVoting() != null ? req.getIsMultipleVoting() : false)
-                .status(PlanStatus.PENDING)
+                .status(PromiseStatus.PENDING)
                 .build();
     }
 
