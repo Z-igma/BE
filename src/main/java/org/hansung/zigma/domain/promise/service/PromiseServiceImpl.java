@@ -28,7 +28,6 @@ public class PromiseServiceImpl implements PromiseService {
 
     private final UserRepository userRepository;
     private final PromiseRepository promiseRepository;
-    private final PromiseMemberRepository promiseMemberRepository;
 
     @Override
     @Transactional
@@ -38,15 +37,13 @@ public class PromiseServiceImpl implements PromiseService {
 
         Promise promise = Promise.toEntity(req);
         Validator.validatePlanDates(promise.getPromisedAt(), promise.getEndAt());
-        Promise savedPlan = promiseRepository.save(promise);
 
-        PromiseMember host = PromiseMember.createMember(user, savedPlan, Role.HOST);
+        PromiseMember host = PromiseMember.createMember(user, promise, Role.HOST);
+        promise.setPromiseMember(host);
 
-        savedPlan.setPromiseMember(host);
+        Promise savedPromise = promiseRepository.save(promise);
 
-        promiseMemberRepository.save(host);
-
-        return PromiseRes.from(savedPlan);
+        return PromiseRes.from(savedPromise);
     }
 
     @Override
