@@ -3,6 +3,7 @@ package org.hansung.zigma.domain.promise.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hansung.zigma.domain.user.entity.User;
+import org.hansung.zigma.global.entity.BaseEntity;
 
 @Entity
 @Getter
@@ -18,7 +19,7 @@ import org.hansung.zigma.domain.user.entity.User;
                 )
         }
 )
-public class PromiseMember {
+public class PromiseMember extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

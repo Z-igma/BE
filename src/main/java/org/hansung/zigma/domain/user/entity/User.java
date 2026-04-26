@@ -2,6 +2,7 @@ package org.hansung.zigma.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hansung.zigma.global.entity.BaseEntity;
 
 @Entity
 @Getter
@@ -9,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
