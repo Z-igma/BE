@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "promise")
+@Table(name = "promises")
 public class Promise extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
