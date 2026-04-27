@@ -2,9 +2,10 @@ package org.hansung.zigma.domain.comment.web.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.hansung.zigma.domain.comment.repository.CommentRepository;
 import org.hansung.zigma.domain.comment.service.CommentService;
+import org.hansung.zigma.domain.comment.web.dto.CommentCommand;
 import org.hansung.zigma.domain.comment.web.dto.CommentCreateReq;
+import org.hansung.zigma.domain.comment.web.dto.CommentListRes;
 import org.hansung.zigma.domain.comment.web.dto.CommentRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
 import org.hansung.zigma.global.response.SuccessResponse;
@@ -34,4 +35,17 @@ public class CommentController {
                 .body(SuccessResponse.created(res));
     }
 
+    @GetMapping("/{promiseId}/comments")
+    public ResponseEntity<SuccessResponse<CommentListRes>> getCommentsWithinBounds(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId,
+            @Valid CommentCommand cond
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+        CommentListRes res = commentService.getCommentsWithinBounds(userId, promiseId, cond);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(res));
+    }
 }
