@@ -16,17 +16,17 @@ import lombok.Setter;
 public class CommentCommand {
     @NotNull(message = "최소 위도값이 누락되었습니다.")
     @Min(-90) @Max(90)
-    Double minLat;
+    private Double minLat;
 
     @NotNull(message = "최대 위도값이 누락되었습니다.")
     @Min(-90) @Max(90)
-    Double maxLat;
+    private Double maxLat;
 
     @NotNull(message = "최소 경도값이 누락되었습니다.")
     @Min(-180) @Max(180)
-    Double minLng;
+    private Double minLng;
 
     @NotNull(message = "최대 경도값이 누락되었습니다.")
     @Min(-180) @Max(180)
-    Double maxLng;
+    private Double maxLng;
 }
