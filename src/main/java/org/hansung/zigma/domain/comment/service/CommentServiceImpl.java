@@ -44,10 +44,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentListRes getCommentsWithinBounds(Long userId, Long promiseId, CommentCommand cond) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        PromiseMember pm = promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+        promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
 
         List<Comment> comments = commentRepository.findWithinBounds(
