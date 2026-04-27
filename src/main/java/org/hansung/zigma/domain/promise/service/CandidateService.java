@@ -1,0 +1,8 @@
+package org.hansung.zigma.domain.promise.service;
+
+import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
+
+public interface CandidateService {
+    CandidateRes createCandidate(Long userId, Long promiseId, CandidateCreateReq req);
+}
