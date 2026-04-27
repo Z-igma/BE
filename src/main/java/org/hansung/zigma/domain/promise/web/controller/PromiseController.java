@@ -35,7 +35,7 @@ public class PromiseController {
     }
 
     @GetMapping
-    public ResponseEntity<SuccessResponse<PromiseListRes>> getAllPromises(
+    public ResponseEntity<SuccessResponse<PromiseListRes>> getPromises(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(required = false) String cursor, // 무한 스크롤 커서
             @RequestParam(defaultValue = "10") int size    // 한 페이지당 개수

@@ -2,8 +2,10 @@ package org.hansung.zigma.domain.promise.web.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.hansung.zigma.domain.comment.web.dto.CommentCommand;
 import org.hansung.zigma.domain.promise.service.CandidateService;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
 import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
 import org.hansung.zigma.global.response.SuccessResponse;
@@ -20,7 +22,7 @@ public class CandidateController {
     private final CandidateService candidateService;
 
     @PostMapping("/{promiseId}/candidates")
-    public ResponseEntity<SuccessResponse<CandidateRes>> createPromise(
+    public ResponseEntity<SuccessResponse<CandidateRes>> createCandidate(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable Long promiseId,
             @RequestBody @Valid CandidateCreateReq req
@@ -32,5 +34,19 @@ public class CandidateController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(SuccessResponse.created(res));
+    }
+
+    @GetMapping("/{promiseId}/candidates")
+    public ResponseEntity<SuccessResponse<CandidateListRes>> getCandidates(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        CandidateListRes res = candidateService.getCandidates(userId, promiseId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(res));
     }
 }

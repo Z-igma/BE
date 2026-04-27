@@ -7,12 +7,15 @@ import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedExcep
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
 import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
 import org.hansung.zigma.domain.user.entity.User;
 import org.hansung.zigma.domain.user.exception.UserNotFoundException;
 import org.hansung.zigma.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,5 +41,21 @@ public class CandidateServiceImpl implements CandidateService {
         Candidate savedCandidate = candidateRepository.save(candidate);
 
         return CandidateRes.from(savedCandidate);
+    }
+
+    @Override
+    public CandidateListRes getCandidates(Long userId, Long promiseId) {
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        List<Candidate> candidates = candidateRepository.findAllByPromiseId(promiseId);
+        List<CandidateRes> res = candidates.stream()
+                .map(CandidateRes::from)
+                .toList();
+
+        return CandidateListRes.from(res);
     }
 }
