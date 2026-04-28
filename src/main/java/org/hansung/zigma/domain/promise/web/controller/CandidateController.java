@@ -2,10 +2,10 @@ package org.hansung.zigma.domain.promise.web.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.hansung.zigma.domain.promise.service.PromiseService;
-import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
-import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
-import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
+import org.hansung.zigma.domain.promise.service.CandidateService;
+import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
+import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
 import org.hansung.zigma.global.response.SuccessResponse;
 import org.springframework.http.HttpStatus;
@@ -16,36 +16,36 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/promises")
-public class PromiseController {
+public class CandidateController {
 
-    private final PromiseService promiseService;
+    private final CandidateService candidateService;
 
-    @PostMapping
-    public ResponseEntity<SuccessResponse<PromiseRes>> createPromise(
+    @PostMapping("/{promiseId}/candidates")
+    public ResponseEntity<SuccessResponse<CandidateRes>> createCandidate(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody @Valid PromiseCreateReq req
+            @PathVariable Long promiseId,
+            @RequestBody @Valid CandidateCreateReq req
     ) {
         Long userId = Long.parseLong(customUserDetails.getUsername());
 
-        PromiseRes res = promiseService.createPromise(userId, req);
+        CandidateRes res = candidateService.createCandidate(userId, promiseId, req);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(SuccessResponse.created(res));
     }
 
-    @GetMapping
-    public ResponseEntity<SuccessResponse<PromiseListRes>> getPromises(
+    @GetMapping("/{promiseId}/candidates")
+    public ResponseEntity<SuccessResponse<CandidateListRes>> getCandidates(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestParam(required = false) String cursor, // 무한 스크롤 커서
-            @RequestParam(defaultValue = "10") int size    // 한 페이지당 개수
+            @PathVariable Long promiseId
     ) {
         Long userId = Long.parseLong(customUserDetails.getUsername());
 
-        PromiseListRes res = promiseService.getPromises(userId, cursor, size);
+        CandidateListRes res = candidateService.getCandidates(userId, promiseId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(SuccessResponse.from(res));
+                .body(SuccessResponse.ok(res));
     }
 }
