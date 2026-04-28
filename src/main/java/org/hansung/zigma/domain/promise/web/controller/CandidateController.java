@@ -2,7 +2,6 @@ package org.hansung.zigma.domain.promise.web.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.hansung.zigma.domain.comment.web.dto.CommentCommand;
 import org.hansung.zigma.domain.promise.service.CandidateService;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
