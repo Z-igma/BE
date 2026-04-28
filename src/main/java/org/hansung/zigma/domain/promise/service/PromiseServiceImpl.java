@@ -37,7 +37,7 @@ public class PromiseServiceImpl implements PromiseService {
                 .orElseThrow(UserNotFoundException::new);
 
         Promise promise = Promise.toEntity(req);
-        Validator.validatePlanDates(promise.getPromisedAt(), promise.getEndAt(), LocalDateTime.now());
+        Validator.validatePromiseDates(promise.getPromisedAt(), promise.getEndAt(), LocalDateTime.now());
 
         PromiseMember host = PromiseMember.createMember(user, promise, Role.HOST);
         promise.setPromiseMember(host);
