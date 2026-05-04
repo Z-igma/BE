@@ -15,4 +15,6 @@ public interface CandidateVoteRepository extends JpaRepository<CandidateVote, Lo
     List<CandidateVote> findAllByPromiseId(Long promiseId);
 
     boolean existsByUserIdAndPromiseId(Long userId, Long promiseId);
+
+    void deleteAllByPromiseId(Long promiseId);
 }

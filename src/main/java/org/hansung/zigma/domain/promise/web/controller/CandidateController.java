@@ -64,4 +64,18 @@ public class CandidateController {
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.ok(null));
     }
+
+    @PostMapping("/{promiseId}/revote")
+    public ResponseEntity<SuccessResponse<Void>> revoteCandidates(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        candidateService.revoteCandidates(userId, promiseId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(null));
+    }
 }

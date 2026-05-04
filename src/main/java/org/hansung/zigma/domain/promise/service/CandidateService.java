@@ -11,4 +11,6 @@ public interface CandidateService {
     CandidateListRes getCandidates(Long userId, Long promiseId);
 
     void confirmCandidate(Long userId, Long promiseId, CandidateConfirmReq req);
+
+    void revoteCandidates(Long userId, Long promiseId);
 }

@@ -82,4 +82,12 @@ public class Candidate extends BaseEntity {
     public void unconfirm() {
         this.isConfirmed = false;
     }
+
+    public void activate() {
+        this.isActive = true;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
 }
