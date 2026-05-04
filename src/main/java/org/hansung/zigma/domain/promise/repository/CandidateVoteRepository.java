@@ -2,6 +2,9 @@ package org.hansung.zigma.domain.promise.repository;
 
 import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,5 +19,7 @@ public interface CandidateVoteRepository extends JpaRepository<CandidateVote, Lo
 
     boolean existsByUserIdAndPromiseId(Long userId, Long promiseId);
 
-    void deleteAllByPromiseId(Long promiseId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from CandidateVote cv where cv.promise.id = :promiseId")
+    void deleteAllByPromiseId(@Param("promiseId") Long promiseId);
 }
