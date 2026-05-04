@@ -39,6 +39,10 @@ public class Candidate extends BaseEntity {
     @Column(nullable = false)
     private Boolean isConfirmed = false; // 확정 여부
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isActive = true; // 현재 투표 대상 여부
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -60,6 +64,7 @@ public class Candidate extends BaseEntity {
                 .longitude(req.getLongitude())
                 .category(req.getCategory())
                 .isConfirmed(false)
+                .isActive(true)
                 .user(user)
                 .promise(promise)
                 .build();

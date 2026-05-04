@@ -57,7 +57,8 @@ public class CandidateServiceImpl implements CandidateService {
         promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
 
-        List<Candidate> candidates = candidateRepository.findAllByPromiseId(promiseId);
+        // 현재 투표 대상으로 살아있는 후보지만 반환
+        List<Candidate> candidates = candidateRepository.findAllByPromiseIdAndIsActiveTrue(promiseId);
         List<CandidateRes> res = candidates.stream()
                 .map(CandidateRes::from)
                 .toList();
