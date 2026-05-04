@@ -69,4 +69,12 @@ public class Candidate extends BaseEntity {
         this.candidateVotes.add(candidateVote);
         candidateVote.setCandidate(this);
     }
+
+    public void confirm() {
+        this.isConfirmed = true;
+    }
+
+    public void unconfirm() {
+        this.isConfirmed = false;
+    }
 }

@@ -76,4 +76,8 @@ public class Promise extends BaseEntity {
         this.candidateVotes.add(candidateVote);
         candidateVote.setPromise(this);
     }
+
+    public void confirm() {
+        this.status = PromiseStatus.CONFIRMED;
+    }
 }
