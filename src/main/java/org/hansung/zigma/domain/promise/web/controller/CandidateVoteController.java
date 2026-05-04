@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.service.CandidateVoteService;
 import org.hansung.zigma.domain.promise.web.dto.CandidateVoteCreateReq;
-import org.hansung.zigma.domain.promise.web.dto.CandidateVoteRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
 import org.hansung.zigma.global.response.SuccessResponse;
 import org.springframework.http.HttpStatus;
@@ -22,17 +21,17 @@ public class CandidateVoteController {
 
     // 투표하기
     @PostMapping("/{promiseId}/votes")
-    public ResponseEntity<SuccessResponse<CandidateVoteRes>> createVote(
+    public ResponseEntity<SuccessResponse<Void>> createVote(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable Long promiseId,
             @RequestBody @Valid CandidateVoteCreateReq req
     ) {
         Long userId = Long.parseLong(customUserDetails.getUsername());
 
-        CandidateVoteRes res = candidateVoteService.createVote(userId, promiseId, req);
+        candidateVoteService.createVote(userId, promiseId, req);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(SuccessResponse.created(res));
+                .body(SuccessResponse.created(null));
     }
 }

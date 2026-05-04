@@ -4,19 +4,23 @@ import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.entity.Candidate;
 import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.hansung.zigma.domain.promise.exception.CandidateNotFoundException;
+import org.hansung.zigma.domain.promise.exception.CandidateVoteConfirmationLockedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteDuplicatedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteMultipleNotAllowedException;
+import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
+import org.hansung.zigma.domain.promise.exception.PromiseVotingClosedException;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
 import org.hansung.zigma.domain.promise.repository.CandidateVoteRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateVoteCreateReq;
-import org.hansung.zigma.domain.promise.web.dto.CandidateVoteRes;
 import org.hansung.zigma.domain.user.entity.User;
 import org.hansung.zigma.domain.user.exception.UserNotFoundException;
 import org.hansung.zigma.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +34,7 @@ public class CandidateVoteServiceImpl implements CandidateVoteService {
 
     @Override
     @Transactional
-    public CandidateVoteRes createVote(Long userId, Long promiseId, CandidateVoteCreateReq req) {
+    public void createVote(Long userId, Long promiseId, CandidateVoteCreateReq req) {
         // 1. 인증된 사용자 자체가 유효한지 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
@@ -43,22 +47,29 @@ public class CandidateVoteServiceImpl implements CandidateVoteService {
         Candidate candidate = candidateRepository.findByIdAndPromiseId(req.getCandidateId(), promiseId)
                 .orElseThrow(CandidateNotFoundException::new);
 
-        // 4. 같은 후보지에 대한 중복 투표는 항상 금지
+        // 4. 투표 종료 시간이 현재보다 이전이거나 같으면 더 이상 투표할 수 없음
+        if (!candidate.getPromise().getEndAt().isAfter(LocalDateTime.now())) {
+            throw new PromiseVotingClosedException();
+        }
+
+        // 5. 약속 전체가 확정되었거나 해당 후보지가 확정되었으면 더 이상 투표할 수 없음
+        if (candidate.getPromise().getStatus() == PromiseStatus.CONFIRMED || candidate.getIsConfirmed()) {
+            throw new CandidateVoteConfirmationLockedException();
+        }
+
+        // 6. 같은 후보지에 대한 중복 투표는 항상 금지
         if (candidateVoteRepository.findByUserIdAndCandidateId(userId, candidate.getId()).isPresent()) {
             throw new CandidateVoteDuplicatedException();
         }
 
-        // 5. 약속이 단일 투표 정책이면, 같은 약속 내 다른 후보지 추가 투표도 금지
+        // 7. 약속이 단일 투표 정책이면, 같은 약속 내 다른 후보지 추가 투표도 금지
         if (!candidate.getPromise().getIsMultipleVoting()
                 && candidateVoteRepository.existsByUserIdAndPromiseId(userId, promiseId)) {
             throw new CandidateVoteMultipleNotAllowedException();
         }
 
-        // 6. 모든 검증을 통과하면 투표 엔티티를 생성하고 저장
+        // 8. 모든 검증을 통과하면 투표 엔티티를 생성하고 저장
         CandidateVote candidateVote = CandidateVote.createVote(user, candidate);
-        CandidateVote savedCandidateVote = candidateVoteRepository.save(candidateVote);
-
-        // 7. 저장 결과를 응답 DTO로 변환
-        return CandidateVoteRes.from(savedCandidateVote);
+        candidateVoteRepository.save(candidateVote);
     }
 }
