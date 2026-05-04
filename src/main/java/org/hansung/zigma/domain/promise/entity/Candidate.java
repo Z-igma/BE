@@ -6,6 +6,9 @@ import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.user.entity.User;
 import org.hansung.zigma.global.entity.BaseEntity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Builder
@@ -44,6 +47,10 @@ public class Candidate extends BaseEntity {
     @JoinColumn(name = "promise_id", nullable = false)
     private Promise promise;
 
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CandidateVote> candidateVotes = new ArrayList<>();
+
     // ------------------------------ 메서드 ------------------------------
     public static Candidate createCandidate(CandidateCreateReq req, User user, Promise promise) {
         return Candidate.builder()
@@ -56,5 +63,10 @@ public class Candidate extends BaseEntity {
                 .user(user)
                 .promise(promise)
                 .build();
+    }
+
+    public void setCandidateVote(CandidateVote candidateVote) {
+        this.candidateVotes.add(candidateVote);
+        candidateVote.setCandidate(this);
     }
 }

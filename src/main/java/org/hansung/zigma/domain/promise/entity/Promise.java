@@ -45,6 +45,10 @@ public class Promise extends BaseEntity {
     @Builder.Default
     private List<PromiseMember> promiseMembers = new ArrayList<>();
 
+    @OneToMany(mappedBy = "promise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CandidateVote> candidateVotes = new ArrayList<>();
+
     // ------------------------------ 메서드 ------------------------------
     public static Promise toEntity(PromiseCreateReq req) {
         // endsAt이 null이면 약속 시간(promisedAt)의 1시간 전으로 설정
@@ -66,5 +70,10 @@ public class Promise extends BaseEntity {
     public void setPromiseMember(PromiseMember promiseMember) {
         this.promiseMembers.add(promiseMember);
         promiseMember.setPromise(this);
+    }
+
+    public void setCandidateVote(CandidateVote candidateVote) {
+        this.candidateVotes.add(candidateVote);
+        candidateVote.setPromise(this);
     }
 }
