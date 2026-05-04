@@ -6,6 +6,7 @@ import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.Role;
+import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
 import org.hansung.zigma.domain.promise.exception.CandidateNotFoundException;
 import org.hansung.zigma.domain.promise.exception.PromiseAlreadyConfirmedException;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
@@ -95,18 +96,23 @@ public class CandidateServiceImpl implements CandidateService {
         Candidate confirmedCandidate = candidateRepository.findByIdAndPromiseId(req.getCandidateId(), promiseId)
                 .orElseThrow(CandidateNotFoundException::new);
 
-        // 5. 이미 확정된 약속이면 중복 확정을 막음
+        // 5. 현재 활성화된 후보지만 장소 확정 대상이 될 수 있음
+        if (!confirmedCandidate.getIsActive()) {
+            throw new CandidateInactiveException();
+        }
+
+        // 6. 이미 확정된 약속이면 중복 확정을 막음
         if (confirmedCandidate.getPromise().getStatus() == PromiseStatus.CONFIRMED) {
             throw new PromiseAlreadyConfirmedException();
         }
 
-        // 6. 같은 약속의 후보지들을 모두 미확정 처리한 뒤
+        // 7. 같은 약속의 후보지들을 모두 미확정 처리한 뒤
         //    선택한 후보지만 확정 상태로 변경
         List<Candidate> candidates = candidateRepository.findAllByPromiseId(promiseId);
         candidates.forEach(Candidate::unconfirm);
         confirmedCandidate.confirm();
 
-        // 7. 약속 전체 상태도 확정 완료로 변경
+        // 8. 약속 전체 상태도 확정 완료로 변경
         confirmedCandidate.getPromise().confirm();
     }
 

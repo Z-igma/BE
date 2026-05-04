@@ -6,6 +6,7 @@ import org.hansung.zigma.domain.promise.entity.Promise;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.Role;
+import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteConfirmationLockedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteDuplicatedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteMultipleNotAllowedException;
@@ -246,6 +247,33 @@ class CandidateVoteServiceImplTest {
         verify(candidateVoteRepository, never()).save(any(CandidateVote.class));
     }
 
+    @Test
+    @DisplayName("비활성 후보지에는 투표할 수 없다")
+    void createVote_failWhenCandidateIsInactive() {
+        // given: 약속은 진행 중이지만 후보지가 현재 투표 대상에서 제외된 상태
+        Long userId = 1L;
+        Long promiseId = 10L;
+        Long candidateId = 100L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, true);
+        Candidate candidate = createCandidate(candidateId, promise, user, false, false);
+        CandidateVoteCreateReq req = createVoteReq(candidateId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId))
+                .thenReturn(Optional.of(PromiseMember.createMember(user, promise, Role.MEMBER)));
+        when(candidateRepository.findByIdAndPromiseId(candidateId, promiseId)).thenReturn(Optional.of(candidate));
+
+        // when & then: 비활성 후보에는 투표할 수 없어야 함
+        assertThatThrownBy(() -> candidateVoteService.createVote(userId, promiseId, req))
+                .isInstanceOf(CandidateInactiveException.class);
+
+        verify(candidateVoteRepository, never()).findByUserIdAndCandidateId(any(), any());
+        verify(candidateVoteRepository, never()).existsByUserIdAndPromiseId(any(), any());
+        verify(candidateVoteRepository, never()).save(any(CandidateVote.class));
+    }
+
     private CandidateVoteCreateReq createVoteReq(Long candidateId) {
         // 테스트용 요청 DTO는 setter가 없어서 reflection으로 값만 주입
         CandidateVoteCreateReq req = new CandidateVoteCreateReq();
@@ -303,6 +331,10 @@ class CandidateVoteServiceImplTest {
     }
 
     private Candidate createCandidate(Long candidateId, Promise promise, User user, boolean isConfirmed) {
+        return createCandidate(candidateId, promise, user, isConfirmed, true);
+    }
+
+    private Candidate createCandidate(Long candidateId, Promise promise, User user, boolean isConfirmed, boolean isActive) {
         // 후보지는 반드시 특정 약속과 작성자 유저에 연결되어 있어야 함
         Candidate candidate = Candidate.builder()
                 .name("후보지")
@@ -311,6 +343,7 @@ class CandidateVoteServiceImplTest {
                 .longitude(127.0)
                 .category("식당")
                 .isConfirmed(isConfirmed)
+                .isActive(isActive)
                 .user(user)
                 .promise(promise)
                 .build();

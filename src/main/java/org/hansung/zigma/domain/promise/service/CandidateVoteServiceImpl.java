@@ -3,6 +3,7 @@ package org.hansung.zigma.domain.promise.service;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.entity.Candidate;
 import org.hansung.zigma.domain.promise.entity.CandidateVote;
+import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
 import org.hansung.zigma.domain.promise.exception.CandidateNotFoundException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteConfirmationLockedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteDuplicatedException;
@@ -47,28 +48,33 @@ public class CandidateVoteServiceImpl implements CandidateVoteService {
         Candidate candidate = candidateRepository.findByIdAndPromiseId(req.getCandidateId(), promiseId)
                 .orElseThrow(CandidateNotFoundException::new);
 
-        // 4. 투표 종료 시간이 현재보다 이전이거나 같으면 더 이상 투표할 수 없음
+        // 4. 현재 투표 대상으로 활성화된 후보지가 아니면 투표할 수 없음
+        if (!candidate.getIsActive()) {
+            throw new CandidateInactiveException();
+        }
+
+        // 5. 투표 종료 시간이 현재보다 이전이거나 같으면 더 이상 투표할 수 없음
         if (!candidate.getPromise().getEndAt().isAfter(LocalDateTime.now())) {
             throw new PromiseVotingClosedException();
         }
 
-        // 5. 약속 전체가 확정되었거나 해당 후보지가 확정되었으면 더 이상 투표할 수 없음
+        // 6. 약속 전체가 확정되었거나 해당 후보지가 확정되었으면 더 이상 투표할 수 없음
         if (candidate.getPromise().getStatus() == PromiseStatus.CONFIRMED || candidate.getIsConfirmed()) {
             throw new CandidateVoteConfirmationLockedException();
         }
 
-        // 6. 같은 후보지에 대한 중복 투표는 항상 금지
+        // 7. 같은 후보지에 대한 중복 투표는 항상 금지
         if (candidateVoteRepository.findByUserIdAndCandidateId(userId, candidate.getId()).isPresent()) {
             throw new CandidateVoteDuplicatedException();
         }
 
-        // 7. 약속이 단일 투표 정책이면, 같은 약속 내 다른 후보지 추가 투표도 금지
+        // 8. 약속이 단일 투표 정책이면, 같은 약속 내 다른 후보지 추가 투표도 금지
         if (!candidate.getPromise().getIsMultipleVoting()
                 && candidateVoteRepository.existsByUserIdAndPromiseId(userId, promiseId)) {
             throw new CandidateVoteMultipleNotAllowedException();
         }
 
-        // 8. 모든 검증을 통과하면 투표 엔티티를 생성하고 저장
+        // 9. 모든 검증을 통과하면 투표 엔티티를 생성하고 저장
         CandidateVote candidateVote = CandidateVote.createVote(user, candidate);
         candidateVoteRepository.save(candidateVote);
     }

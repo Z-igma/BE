@@ -6,6 +6,7 @@ import org.hansung.zigma.domain.promise.entity.Promise;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.Role;
+import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
 import org.hansung.zigma.domain.promise.exception.PromiseAlreadyConfirmedException;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberHostOnlyException;
 import org.hansung.zigma.domain.promise.exception.PromiseRevoteNotAvailableException;
@@ -131,6 +132,32 @@ class CandidateServiceImplTest {
         // when & then: 이미 확정된 약속이면 중복 확정을 막아야 함
         assertThatThrownBy(() -> candidateService.confirmCandidate(userId, promiseId, req))
                 .isInstanceOf(PromiseAlreadyConfirmedException.class);
+
+        verify(candidateRepository, never()).findAllByPromiseId(promiseId);
+    }
+
+    @Test
+    @DisplayName("비활성 후보지는 장소 확정할 수 없다")
+    void confirmCandidate_failWhenCandidateIsInactive() {
+        // given: 방장이 맞지만 후보지가 현재 활성 후보가 아닌 상태
+        Long userId = 1L;
+        Long promiseId = 10L;
+        Long candidateId = 101L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, PromiseStatus.PENDING);
+        PromiseMember host = PromiseMember.createMember(user, promise, Role.HOST);
+        Candidate candidate = createCandidate(candidateId, promise, user, false, false);
+        CandidateConfirmReq req = createConfirmReq(candidateId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)).thenReturn(Optional.of(host));
+        when(candidateRepository.findByIdAndPromiseId(candidateId, promiseId))
+                .thenReturn(Optional.of(candidate));
+
+        // when & then: 비활성 후보는 확정 대상이 될 수 없어야 함
+        assertThatThrownBy(() -> candidateService.confirmCandidate(userId, promiseId, req))
+                .isInstanceOf(CandidateInactiveException.class);
 
         verify(candidateRepository, never()).findAllByPromiseId(promiseId);
     }
