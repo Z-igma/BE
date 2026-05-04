@@ -1,13 +1,16 @@
 package org.hansung.zigma.domain.promise.service;
 
 import org.hansung.zigma.domain.promise.entity.Candidate;
+import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.hansung.zigma.domain.promise.entity.Promise;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.Role;
 import org.hansung.zigma.domain.promise.exception.PromiseAlreadyConfirmedException;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberHostOnlyException;
+import org.hansung.zigma.domain.promise.exception.PromiseRevoteNotAvailableException;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
+import org.hansung.zigma.domain.promise.repository.CandidateVoteRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateConfirmReq;
 import org.hansung.zigma.domain.user.entity.User;
@@ -42,6 +45,9 @@ class CandidateServiceImplTest {
 
     @Mock
     private CandidateRepository candidateRepository;
+
+    @Mock
+    private CandidateVoteRepository candidateVoteRepository;
 
     @InjectMocks
     private CandidateServiceImpl candidateService;
@@ -129,6 +135,112 @@ class CandidateServiceImplTest {
         verify(candidateRepository, never()).findAllByPromiseId(promiseId);
     }
 
+    @Test
+    @DisplayName("동점 후보가 2개 이상이면 해당 후보들만 남기고 재투표를 시작한다")
+    void revoteCandidates_success() {
+        // given: 방장이 재투표를 시작하고, 후보 2개가 같은 최다 득표수인 상황
+        Long userId = 1L;
+        Long promiseId = 10L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, PromiseStatus.PENDING);
+        PromiseMember host = PromiseMember.createMember(user, promise, Role.HOST);
+
+        Candidate firstCandidate = createCandidate(100L, promise, user, false, true);
+        Candidate secondCandidate = createCandidate(101L, promise, user, false, true);
+        Candidate thirdCandidate = createCandidate(102L, promise, user, false, true);
+
+        List<CandidateVote> votes = List.of(
+                createVote(user, firstCandidate),
+                createVote(createUser(2L), firstCandidate),
+                createVote(createUser(3L), secondCandidate),
+                createVote(createUser(4L), secondCandidate),
+                createVote(createUser(5L), thirdCandidate)
+        );
+
+        LocalDateTime beforeRevote = LocalDateTime.now();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)).thenReturn(Optional.of(host));
+        when(candidateRepository.findAllByPromiseIdAndIsActiveTrue(promiseId))
+                .thenReturn(List.of(firstCandidate, secondCandidate, thirdCandidate));
+        when(candidateRepository.findAllByPromiseId(promiseId))
+                .thenReturn(List.of(firstCandidate, secondCandidate, thirdCandidate));
+        when(candidateVoteRepository.findAllByPromiseId(promiseId)).thenReturn(votes);
+
+        // when: 재투표 시작
+        candidateService.revoteCandidates(userId, promiseId);
+
+        // then: 동점 후보 2개만 활성 상태로 남고, 나머지는 제외되어야 함
+        assertThat(firstCandidate.getIsActive()).isTrue();
+        assertThat(secondCandidate.getIsActive()).isTrue();
+        assertThat(thirdCandidate.getIsActive()).isFalse();
+
+        // 재투표는 단일 투표로 다시 열리고, 약속 상태는 진행 중으로 변경되어야 함
+        assertThat(promise.getIsMultipleVoting()).isFalse();
+        assertThat(promise.getStatus()).isEqualTo(PromiseStatus.PROCEEDING);
+        assertThat(promise.getEndAt()).isAfter(beforeRevote.plusHours(11));
+
+        // 기존 투표 기록은 전부 삭제되어야 함
+        verify(candidateVoteRepository).deleteAllByPromiseId(promiseId);
+    }
+
+    @Test
+    @DisplayName("재투표 대상 후보가 1개 이하이면 재투표를 시작할 수 없다")
+    void revoteCandidates_failWhenRevoteCandidateCountIsLessThanTwo() {
+        // given: 최다 득표 후보가 1개뿐이라 동점 재투표를 할 수 없는 상황
+        Long userId = 1L;
+        Long promiseId = 10L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, PromiseStatus.PENDING);
+        PromiseMember host = PromiseMember.createMember(user, promise, Role.HOST);
+
+        Candidate firstCandidate = createCandidate(100L, promise, user, false, true);
+        Candidate secondCandidate = createCandidate(101L, promise, user, false, true);
+
+        List<CandidateVote> votes = List.of(
+                createVote(user, firstCandidate),
+                createVote(createUser(2L), firstCandidate),
+                createVote(createUser(3L), secondCandidate)
+        );
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)).thenReturn(Optional.of(host));
+        when(candidateRepository.findAllByPromiseIdAndIsActiveTrue(promiseId))
+                .thenReturn(List.of(firstCandidate, secondCandidate));
+        when(candidateVoteRepository.findAllByPromiseId(promiseId)).thenReturn(votes);
+
+        // when & then: 동점 후보가 2개 미만이면 예외가 발생해야 함
+        assertThatThrownBy(() -> candidateService.revoteCandidates(userId, promiseId))
+                .isInstanceOf(PromiseRevoteNotAvailableException.class);
+
+        verify(candidateRepository, never()).findAllByPromiseId(promiseId);
+        verify(candidateVoteRepository, never()).deleteAllByPromiseId(promiseId);
+    }
+
+    @Test
+    @DisplayName("방장이 아닌 참여자가 재투표를 시작하면 예외가 발생한다")
+    void revoteCandidates_failWhenMemberIsNotHost() {
+        // given: 약속 참여자는 맞지만 역할이 MEMBER인 사용자
+        Long userId = 1L;
+        Long promiseId = 10L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, PromiseStatus.PENDING);
+        PromiseMember member = PromiseMember.createMember(user, promise, Role.MEMBER);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)).thenReturn(Optional.of(member));
+
+        // when & then: 방장이 아니면 재투표 후보 계산 전에 예외가 발생해야 함
+        assertThatThrownBy(() -> candidateService.revoteCandidates(userId, promiseId))
+                .isInstanceOf(PromiseMemberHostOnlyException.class);
+
+        verify(candidateRepository, never()).findAllByPromiseIdAndIsActiveTrue(promiseId);
+        verify(candidateVoteRepository, never()).findAllByPromiseId(promiseId);
+    }
+
     private CandidateConfirmReq createConfirmReq(Long candidateId) {
         // 테스트용 요청 DTO는 setter가 없어서 reflection으로 값만 주입
         CandidateConfirmReq req = new CandidateConfirmReq();
@@ -162,6 +274,10 @@ class CandidateServiceImplTest {
     }
 
     private Candidate createCandidate(Long candidateId, Promise promise, User user, boolean isConfirmed) {
+        return createCandidate(candidateId, promise, user, isConfirmed, true);
+    }
+
+    private Candidate createCandidate(Long candidateId, Promise promise, User user, boolean isConfirmed, boolean isActive) {
         Candidate candidate = Candidate.builder()
                 .name("후보지")
                 .address("서울시 어딘가")
@@ -169,10 +285,15 @@ class CandidateServiceImplTest {
                 .longitude(127.0)
                 .category("식당")
                 .isConfirmed(isConfirmed)
+                .isActive(isActive)
                 .user(user)
                 .promise(promise)
                 .build();
         ReflectionTestUtils.setField(candidate, "id", candidateId);
         return candidate;
+    }
+
+    private CandidateVote createVote(User user, Candidate candidate) {
+        return CandidateVote.createVote(user, candidate);
     }
 }
