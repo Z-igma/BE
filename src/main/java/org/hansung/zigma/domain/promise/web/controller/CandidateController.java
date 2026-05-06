@@ -50,6 +50,21 @@ public class CandidateController {
                 .body(SuccessResponse.ok(res));
     }
 
+    @DeleteMapping("/{promiseId}/candidates/{candidateId}")
+    public ResponseEntity<SuccessResponse<?>> deleteCandidate(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId,
+            @PathVariable Long candidateId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        candidateService.deleteCandidate(userId, promiseId, candidateId);
+
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .body(SuccessResponse.noContent());
+    }
+
     @PostMapping("/{promiseId}/confirmed")
     public ResponseEntity<SuccessResponse<Void>> confirmCandidate(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
