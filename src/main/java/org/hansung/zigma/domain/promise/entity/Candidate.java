@@ -6,6 +6,9 @@ import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.user.entity.User;
 import org.hansung.zigma.global.entity.BaseEntity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Builder
@@ -36,6 +39,10 @@ public class Candidate extends BaseEntity {
     @Column(nullable = false)
     private Boolean isConfirmed = false; // 확정 여부
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isActive = true; // 현재 투표 대상 여부
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -43,6 +50,10 @@ public class Candidate extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "promise_id", nullable = false)
     private Promise promise;
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CandidateVote> candidateVotes = new ArrayList<>();
 
     // ------------------------------ 메서드 ------------------------------
     public static Candidate createCandidate(CandidateCreateReq req, User user, Promise promise) {
@@ -53,8 +64,30 @@ public class Candidate extends BaseEntity {
                 .longitude(req.getLongitude())
                 .category(req.getCategory())
                 .isConfirmed(false)
+                .isActive(true)
                 .user(user)
                 .promise(promise)
                 .build();
+    }
+
+    public void setCandidateVote(CandidateVote candidateVote) {
+        this.candidateVotes.add(candidateVote);
+        candidateVote.setCandidate(this);
+    }
+
+    public void confirm() {
+        this.isConfirmed = true;
+    }
+
+    public void unconfirm() {
+        this.isConfirmed = false;
+    }
+
+    public void activate() {
+        this.isActive = true;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
     }
 }

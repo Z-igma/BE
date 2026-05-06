@@ -3,6 +3,7 @@ package org.hansung.zigma.domain.promise.web.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.service.CandidateService;
+import org.hansung.zigma.domain.promise.web.dto.CandidateConfirmReq;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
 import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
@@ -47,5 +48,34 @@ public class CandidateController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.ok(res));
+    }
+
+    @PostMapping("/{promiseId}/confirmed")
+    public ResponseEntity<SuccessResponse<Void>> confirmCandidate(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId,
+            @RequestBody @Valid CandidateConfirmReq req
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        candidateService.confirmCandidate(userId, promiseId, req);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(null));
+    }
+
+    @PostMapping("/{promiseId}/revote")
+    public ResponseEntity<SuccessResponse<Void>> revoteCandidates(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        candidateService.revoteCandidates(userId, promiseId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(null));
     }
 }

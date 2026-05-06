@@ -2,11 +2,21 @@ package org.hansung.zigma.domain.promise.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.entity.Candidate;
+import org.hansung.zigma.domain.promise.entity.CandidateVote;
+import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
+import org.hansung.zigma.domain.promise.entity.Role;
+import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
+import org.hansung.zigma.domain.promise.exception.CandidateNotFoundException;
+import org.hansung.zigma.domain.promise.exception.PromiseAlreadyConfirmedException;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
+import org.hansung.zigma.domain.promise.exception.PromiseMemberHostOnlyException;
+import org.hansung.zigma.domain.promise.exception.PromiseRevoteNotAvailableException;
 import org.hansung.zigma.domain.promise.exception.PromiseNotFoundException;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
+import org.hansung.zigma.domain.promise.repository.CandidateVoteRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
+import org.hansung.zigma.domain.promise.web.dto.CandidateConfirmReq;
 import org.hansung.zigma.domain.promise.repository.PromiseRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
@@ -16,7 +26,12 @@ import org.hansung.zigma.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +42,7 @@ public class CandidateServiceImpl implements CandidateService {
     private final PromiseRepository promiseRepository;
     private final PromiseMemberRepository promiseMemberRepository;
     private final CandidateRepository candidateRepository;
+    private final CandidateVoteRepository candidateVoteRepository;
 
     @Override
     @Transactional
@@ -59,11 +75,109 @@ public class CandidateServiceImpl implements CandidateService {
         promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
 
-        List<Candidate> candidates = candidateRepository.findAllByPromiseId(promiseId);
+        // 현재 투표 대상으로 살아있는 후보지만 반환
+        List<Candidate> candidates = candidateRepository.findAllByPromiseIdAndIsActiveTrue(promiseId);
         List<CandidateRes> res = candidates.stream()
                 .map(CandidateRes::from)
                 .toList();
 
         return CandidateListRes.from(res);
+    }
+
+    @Override
+    @Transactional
+    public void confirmCandidate(Long userId, Long promiseId, CandidateConfirmReq req) {
+        // 1. 인증된 사용자 자체가 유효한지 확인
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 해당 사용자가 이 약속의 참여자인지 확인
+        PromiseMember promiseMember = promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        // 3. 장소 확정은 방장만 가능
+        if (promiseMember.getRole() != Role.HOST) {
+            throw new PromiseMemberHostOnlyException();
+        }
+
+        // 4. 요청한 후보지가 실제로 이 약속에 속한 후보지인지 확인
+        Candidate confirmedCandidate = candidateRepository.findByIdAndPromiseId(req.getCandidateId(), promiseId)
+                .orElseThrow(CandidateNotFoundException::new);
+
+        // 5. 현재 활성화된 후보지만 장소 확정 대상이 될 수 있음
+        if (!confirmedCandidate.getIsActive()) {
+            throw new CandidateInactiveException();
+        }
+
+        // 6. 이미 확정된 약속이면 중복 확정을 막음
+        if (confirmedCandidate.getPromise().getStatus() == PromiseStatus.CONFIRMED) {
+            throw new PromiseAlreadyConfirmedException();
+        }
+
+        // 7. 같은 약속의 후보지들을 모두 미확정 처리한 뒤
+        //    선택한 후보지만 확정 상태로 변경
+        List<Candidate> candidates = candidateRepository.findAllByPromiseId(promiseId);
+        candidates.forEach(Candidate::unconfirm);
+        confirmedCandidate.confirm();
+
+        // 8. 약속 전체 상태도 확정 완료로 변경
+        confirmedCandidate.getPromise().confirm();
+    }
+
+    @Override
+    @Transactional
+    public void revoteCandidates(Long userId, Long promiseId) {
+        // 1. 인증된 사용자 자체가 유효한지 확인
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 해당 사용자가 이 약속의 참여자인지 확인
+        PromiseMember promiseMember = promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        // 3. 재투표 시작도 방장만 가능
+        if (promiseMember.getRole() != Role.HOST) {
+            throw new PromiseMemberHostOnlyException();
+        }
+
+        // 4. 현재 투표 대상 후보들과 투표 내역을 조회
+        List<Candidate> activeCandidates = candidateRepository.findAllByPromiseIdAndIsActiveTrue(promiseId);
+        List<CandidateVote> candidateVotes = candidateVoteRepository.findAllByPromiseId(promiseId);
+
+        Map<Long, Long> voteCountByCandidateId = candidateVotes.stream()
+                .collect(Collectors.groupingBy(vote -> vote.getCandidate().getId(), Collectors.counting()));
+
+        long maxVoteCount = activeCandidates.stream()
+                .mapToLong(candidate -> voteCountByCandidateId.getOrDefault(candidate.getId(), 0L))
+                .max()
+                .orElse(0L);
+
+        // 5. 최다 득표 동점 후보가 2개 이상일 때만 재투표 가능
+        List<Candidate> revoteCandidates = activeCandidates.stream()
+                .filter(candidate -> voteCountByCandidateId.getOrDefault(candidate.getId(), 0L) == maxVoteCount)
+                .toList();
+
+        if (revoteCandidates.size() < 2) {
+            throw new PromiseRevoteNotAvailableException();
+        }
+
+        Set<Long> revoteCandidateIds = revoteCandidates.stream()
+                .map(Candidate::getId)
+                .collect(Collectors.toSet());
+
+        // 6. 동점 후보만 다시 활성화하고, 나머지 후보는 재투표 대상에서 제외
+        List<Candidate> allCandidates = candidateRepository.findAllByPromiseId(promiseId);
+        allCandidates.forEach(candidate -> {
+            candidate.unconfirm();
+            if (revoteCandidateIds.contains(candidate.getId())) {
+                candidate.activate();
+            } else {
+                candidate.deactivate();
+            }
+        });
+
+        // 7. 기존 투표를 비우고, 단일 투표 + 12시간 뒤 종료로 재설정
+        candidateVoteRepository.deleteAllByPromiseId(promiseId);
+        promiseMember.getPromise().startRevote(LocalDateTime.now().plusHours(12));
     }
 }
