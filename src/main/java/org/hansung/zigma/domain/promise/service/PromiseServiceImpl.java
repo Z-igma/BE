@@ -121,6 +121,6 @@ public class PromiseServiceImpl implements PromiseService {
         }
 
         PromiseMember promiseMember = PromiseMember.createMember(user, promise, Role.MEMBER);
-        promiseMemberRepository.save(promiseMember);
+        promise.setPromiseMember(promiseMember);
     }
 }
