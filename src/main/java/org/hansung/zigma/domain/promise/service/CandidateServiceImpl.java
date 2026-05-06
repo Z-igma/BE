@@ -12,14 +12,15 @@ import org.hansung.zigma.domain.promise.exception.PromiseAlreadyConfirmedExcepti
 import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberHostOnlyException;
 import org.hansung.zigma.domain.promise.exception.PromiseRevoteNotAvailableException;
+import org.hansung.zigma.domain.promise.exception.PromiseNotFoundException;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
 import org.hansung.zigma.domain.promise.repository.CandidateVoteRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateConfirmReq;
+import org.hansung.zigma.domain.promise.repository.PromiseRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
 import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
-import org.hansung.zigma.domain.user.entity.User;
 import org.hansung.zigma.domain.user.exception.UserNotFoundException;
 import org.hansung.zigma.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class CandidateServiceImpl implements CandidateService {
 
     private final UserRepository userRepository;
+    private final PromiseRepository promiseRepository;
     private final PromiseMemberRepository promiseMemberRepository;
     private final CandidateRepository candidateRepository;
     private final CandidateVoteRepository candidateVoteRepository;
@@ -45,14 +47,17 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public CandidateRes createCandidate(Long userId, Long promiseId, CandidateCreateReq req) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
+
+        promiseRepository.findById(promiseId)
+                .orElseThrow(PromiseNotFoundException::new);
 
         PromiseMember pm = promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
 
         Candidate candidate = Candidate.createCandidate(
-                req, user, pm.getPromise()
+                req, pm.getUser(), pm.getPromise()
         );
         Candidate savedCandidate = candidateRepository.save(candidate);
 
@@ -63,6 +68,9 @@ public class CandidateServiceImpl implements CandidateService {
     public CandidateListRes getCandidates(Long userId, Long promiseId) {
         userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
+
+        promiseRepository.findById(promiseId)
+                .orElseThrow(PromiseNotFoundException::new);
 
         promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
