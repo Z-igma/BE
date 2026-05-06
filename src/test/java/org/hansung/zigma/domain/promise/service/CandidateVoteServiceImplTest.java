@@ -10,6 +10,7 @@ import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteConfirmationLockedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteDuplicatedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteMultipleNotAllowedException;
+import org.hansung.zigma.domain.promise.exception.CandidateVoteNotFoundException;
 import org.hansung.zigma.domain.promise.exception.PromiseVotingClosedException;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
 import org.hansung.zigma.domain.promise.repository.CandidateVoteRepository;
@@ -272,6 +273,59 @@ class CandidateVoteServiceImplTest {
         verify(candidateVoteRepository, never()).findByUserIdAndCandidateId(any(), any());
         verify(candidateVoteRepository, never()).existsByUserIdAndPromiseId(any(), any());
         verify(candidateVoteRepository, never()).save(any(CandidateVote.class));
+    }
+
+    @Test
+    @DisplayName("내가 한 투표는 정상적으로 취소할 수 있다")
+    void cancelVote_success() {
+        // given: 사용자가 해당 후보에 직접 투표한 기록이 있는 상태
+        Long userId = 1L;
+        Long promiseId = 10L;
+        Long candidateId = 100L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, true);
+        Candidate candidate = createCandidate(candidateId, promise, user);
+        CandidateVote candidateVote = CandidateVote.createVote(user, candidate);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId))
+                .thenReturn(Optional.of(PromiseMember.createMember(user, promise, Role.MEMBER)));
+        when(candidateRepository.findByIdAndPromiseId(candidateId, promiseId)).thenReturn(Optional.of(candidate));
+        when(candidateVoteRepository.findByUserIdAndCandidateId(userId, candidateId))
+                .thenReturn(Optional.of(candidateVote));
+
+        // when: 내 투표 취소 요청
+        candidateVoteService.cancelVote(userId, promiseId, candidateId);
+
+        // then: 내 투표 기록이 삭제되어야 함
+        verify(candidateVoteRepository).delete(candidateVote);
+    }
+
+    @Test
+    @DisplayName("내가 투표하지 않은 후보를 취소하려 하면 예외가 발생한다")
+    void cancelVote_failWhenUserDidNotVote() {
+        // given: 후보지는 존재하지만 현재 사용자가 한 투표 기록은 없는 상태
+        Long userId = 1L;
+        Long promiseId = 10L;
+        Long candidateId = 100L;
+
+        User user = createUser(userId);
+        Promise promise = createPromise(promiseId, true);
+        Candidate candidate = createCandidate(candidateId, promise, user);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId))
+                .thenReturn(Optional.of(PromiseMember.createMember(user, promise, Role.MEMBER)));
+        when(candidateRepository.findByIdAndPromiseId(candidateId, promiseId)).thenReturn(Optional.of(candidate));
+        when(candidateVoteRepository.findByUserIdAndCandidateId(userId, candidateId))
+                .thenReturn(Optional.empty());
+
+        // when & then: 내가 넣지 않은 표는 취소할 수 없어야 함
+        assertThatThrownBy(() -> candidateVoteService.cancelVote(userId, promiseId, candidateId))
+                .isInstanceOf(CandidateVoteNotFoundException.class);
+
+        verify(candidateVoteRepository, never()).delete(any(CandidateVote.class));
     }
 
     private CandidateVoteCreateReq createVoteReq(Long candidateId) {
