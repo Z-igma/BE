@@ -23,8 +23,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        int joinedPromiseCount = promiseMemberRepository.countByUserId(userId);
-        int createdPromiseCount = promiseMemberRepository.countByUserIdAndRole(userId, Role.HOST);
+        long joinedPromiseCount = promiseMemberRepository.countByUserId(userId);
+        long createdPromiseCount = promiseMemberRepository.countByUserIdAndRole(userId, Role.HOST);
 
         return UserRes.of(user, joinedPromiseCount, createdPromiseCount);
     }

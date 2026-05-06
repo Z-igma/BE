@@ -8,13 +8,13 @@ public record UserRes(
         String nickname,
         String profileImageUrl,
         String bio,
-        int joinedPromiseCount,  // 참여중인 약속 수
-        int hostedPromiseCount    // 내가 만든 약속 수
+        long joinedPromiseCount,  // 참여중인 약속 수
+        long hostedPromiseCount    // 내가 만든 약속 수
 ) {
     public static UserRes of(
             User user,
-            int joinedPromiseCount,
-            int hostedPromiseCount
+            long joinedPromiseCount,
+            long hostedPromiseCount
     ) {
         return new UserRes(
                 user.getId(),

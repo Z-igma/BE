@@ -12,7 +12,7 @@ public interface PromiseMemberRepository extends JpaRepository<PromiseMember, Lo
 
     Optional<PromiseMember> findByUserIdAndPromiseId(Long userId, Long promiseId);
 
-    int countByUserId(Long userId);
+    long countByUserId(Long userId);
 
-    int countByUserIdAndRole(Long userId, Role role);
+    long countByUserIdAndRole(Long userId, Role role);
 }
