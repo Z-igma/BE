@@ -31,6 +31,9 @@ public class User extends BaseEntity {
     @Column(name = "profile_image_url", nullable = true) // 사용자가 설정하지 않으면 null로 넘어옴
     private String profileImageUrl;
 
+    @Column(name = "bio", nullable = true)
+    private String bio; // 한줄 소개
+
     // ---------- 메서드 ----------
     public static User create(UserProvider provider, String providerId, String email, String nickName, String profileImageUrl) {
         return User.builder()
