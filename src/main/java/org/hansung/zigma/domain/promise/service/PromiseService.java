@@ -15,4 +15,6 @@ public interface PromiseService {
     PromiseDetailRes getPromise(Long userId, Long promiseId);
     // 초대 코드 생성
     PromiseInviteRes createInviteCode(Long userId, Long promiseId);
+    // 초대 코드로 멤버 참여
+    void joinPromiseByInviteCode(Long userId, String inviteCode);
 }

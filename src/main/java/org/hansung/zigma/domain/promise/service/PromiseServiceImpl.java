@@ -105,4 +105,22 @@ public class PromiseServiceImpl implements PromiseService {
 
         return PromiseInviteRes.of(promiseId, inviteCode);
     }
+
+    @Override
+    @Transactional
+    public void joinPromiseByInviteCode(Long userId, String inviteCode) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        Promise promise = promiseRepository.findByInviteCode(inviteCode)
+                .orElseThrow(PromiseNotFoundException::new);
+
+        // 이미 참여 중이면 중복 생성하지 않고 그대로 성공 처리
+        if (promiseMemberRepository.findByUserIdAndPromiseId(userId, promise.getId()).isPresent()) {
+            return;
+        }
+
+        PromiseMember promiseMember = PromiseMember.createMember(user, promise, Role.MEMBER);
+        promiseMemberRepository.save(promiseMember);
+    }
 }

@@ -78,4 +78,18 @@ public class PromiseController {
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.ok(res));
     }
+
+    @PostMapping("/invite/{inviteCode}")
+    public ResponseEntity<SuccessResponse<Void>> joinPromiseByInviteCode(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable String inviteCode
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        promiseService.joinPromiseByInviteCode(userId, inviteCode);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(null));
+    }
 }
