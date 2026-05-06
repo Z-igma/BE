@@ -7,6 +7,7 @@ import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedExcep
 import org.hansung.zigma.domain.promise.exception.PromiseNotFoundException;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
+import org.hansung.zigma.domain.promise.repository.PromiseRepository;
 import org.hansung.zigma.domain.promise.web.dto.CandidateCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
 import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
@@ -23,6 +24,7 @@ import java.util.List;
 public class CandidateServiceImpl implements CandidateService {
 
     private final UserRepository userRepository;
+    private final PromiseRepository promiseRepository;
     private final PromiseMemberRepository promiseMemberRepository;
     private final CandidateRepository candidateRepository;
 
@@ -32,7 +34,7 @@ public class CandidateServiceImpl implements CandidateService {
         userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        promiseMemberRepository.findById(promiseId)
+        promiseRepository.findById(promiseId)
                 .orElseThrow(PromiseNotFoundException::new);
 
         PromiseMember pm = promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
@@ -51,7 +53,7 @@ public class CandidateServiceImpl implements CandidateService {
         userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        promiseMemberRepository.findById(promiseId)
+        promiseRepository.findById(promiseId)
                 .orElseThrow(PromiseNotFoundException::new);
 
         promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
