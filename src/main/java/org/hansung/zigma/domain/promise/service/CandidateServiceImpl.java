@@ -6,13 +6,7 @@ import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.Role;
-import org.hansung.zigma.domain.promise.exception.CandidateInactiveException;
-import org.hansung.zigma.domain.promise.exception.CandidateNotFoundException;
-import org.hansung.zigma.domain.promise.exception.PromiseAlreadyConfirmedException;
-import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
-import org.hansung.zigma.domain.promise.exception.PromiseMemberHostOnlyException;
-import org.hansung.zigma.domain.promise.exception.PromiseRevoteNotAvailableException;
-import org.hansung.zigma.domain.promise.exception.PromiseNotFoundException;
+import org.hansung.zigma.domain.promise.exception.*;
 import org.hansung.zigma.domain.promise.repository.CandidateRepository;
 import org.hansung.zigma.domain.promise.repository.CandidateVoteRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
@@ -30,7 +24,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,6 +75,32 @@ public class CandidateServiceImpl implements CandidateService {
                 .toList();
 
         return CandidateListRes.from(res);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCandidate(Long userId, Long promiseId, Long candidateId) {
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        promiseRepository.findById(promiseId)
+                .orElseThrow(PromiseNotFoundException::new);
+
+        promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        Candidate candidate = candidateRepository.findByIdAndPromiseId(candidateId, promiseId)
+                .orElseThrow(CandidateNotFoundException::new);
+
+        if (!candidate.getUser().getId().equals(userId)) {
+            throw new CandidateAccessDeniedException();
+        }
+
+        if (candidate.getIsConfirmed()) {
+            throw new CandidateAlreadyConfirmedException();
+        }
+
+        candidateRepository.delete(candidate);
     }
 
     @Override
