@@ -31,4 +31,6 @@ public interface PromiseRepository extends JpaRepository<Promise, Long> {
             "JOIN FETCH pm.user " +
             "WHERE p.id = :promiseId")
     Optional<Promise> findDetailById(@Param("promiseId") Long promiseId);
+
+    Optional<Promise> findByInviteCode(String inviteCode);
 }

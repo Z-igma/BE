@@ -8,6 +8,7 @@ import org.hansung.zigma.global.entity.BaseEntity;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -40,6 +41,9 @@ public class Promise extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PromiseStatus status; // 약속 상태
+
+    @Column(name = "invite_code", unique = true)
+    private String inviteCode; // 초대 링크용 UUID
 
     @OneToMany(mappedBy = "promise", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -85,5 +89,12 @@ public class Promise extends BaseEntity {
         this.isMultipleVoting = false;
         this.endAt = endAt;
         this.status = PromiseStatus.PROCEEDING;
+    }
+
+    public String issueInviteCode() {
+        if (this.inviteCode == null || this.inviteCode.isBlank()) {
+            this.inviteCode = UUID.randomUUID().toString();
+        }
+        return this.inviteCode;
     }
 }

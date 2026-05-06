@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.service.PromiseService;
 import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.PromiseDetailRes;
+import org.hansung.zigma.domain.promise.web.dto.PromiseInviteRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
@@ -62,5 +63,33 @@ public class PromiseController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.from(res));
+    }
+
+    @PostMapping("/{promiseId}/invite")
+    public ResponseEntity<SuccessResponse<PromiseInviteRes>> createInviteCode(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        PromiseInviteRes res = promiseService.createInviteCode(userId, promiseId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(res));
+    }
+
+    @PostMapping("/invite/{inviteCode}")
+    public ResponseEntity<SuccessResponse<Void>> joinPromiseByInviteCode(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable String inviteCode
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        promiseService.joinPromiseByInviteCode(userId, inviteCode);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(null));
     }
 }

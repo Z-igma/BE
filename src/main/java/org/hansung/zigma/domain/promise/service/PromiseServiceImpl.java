@@ -5,6 +5,7 @@ import org.hansung.zigma.domain.promise.entity.Promise;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.Role;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
+import org.hansung.zigma.domain.promise.exception.PromiseMemberHostOnlyException;
 import org.hansung.zigma.domain.promise.exception.PromiseNotFoundException;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseRepository;
@@ -13,6 +14,7 @@ import org.hansung.zigma.domain.promise.util.CursorUtil.CursorContents;
 import org.hansung.zigma.domain.promise.util.Validator;
 import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
 import org.hansung.zigma.domain.promise.web.dto.PromiseDetailRes;
+import org.hansung.zigma.domain.promise.web.dto.PromiseInviteRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
 import org.hansung.zigma.domain.user.entity.User;
@@ -84,5 +86,41 @@ public class PromiseServiceImpl implements PromiseService {
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
 
         return PromiseDetailRes.from(promise);
+    }
+
+    @Override
+    @Transactional
+    public PromiseInviteRes createInviteCode(Long userId, Long promiseId) {
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        PromiseMember promiseMember = promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        if (promiseMember.getRole() != Role.HOST) {
+            throw new PromiseMemberHostOnlyException();
+        }
+
+        String inviteCode = promiseMember.getPromise().issueInviteCode();
+
+        return PromiseInviteRes.of(promiseId, inviteCode);
+    }
+
+    @Override
+    @Transactional
+    public void joinPromiseByInviteCode(Long userId, String inviteCode) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        Promise promise = promiseRepository.findByInviteCode(inviteCode)
+                .orElseThrow(PromiseNotFoundException::new);
+
+        // 이미 참여 중이면 중복 생성하지 않고 그대로 성공 처리
+        if (promiseMemberRepository.findByUserIdAndPromiseId(userId, promise.getId()).isPresent()) {
+            return;
+        }
+
+        PromiseMember promiseMember = PromiseMember.createMember(user, promise, Role.MEMBER);
+        promise.setPromiseMember(promiseMember);
     }
 }
