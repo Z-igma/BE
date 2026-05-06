@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PromiseRepository extends JpaRepository<Promise, Long> {
@@ -24,4 +25,10 @@ public interface PromiseRepository extends JpaRepository<Promise, Long> {
                                      @Param("lastPromisedAt") LocalDateTime lastPromisedAt,
                                      @Param("cursor") Long cursor,
                                      Pageable pageable);
+
+    @Query("SELECT p FROM Promise p " +
+            "JOIN FETCH p.promiseMembers pm " +
+            "JOIN FETCH pm.user " +
+            "WHERE p.id = :promiseId")
+    Optional<Promise> findDetailById(@Param("promiseId") Long promiseId);
 }
