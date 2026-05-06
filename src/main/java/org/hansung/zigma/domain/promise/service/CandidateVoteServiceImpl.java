@@ -8,6 +8,7 @@ import org.hansung.zigma.domain.promise.exception.CandidateNotFoundException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteConfirmationLockedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteDuplicatedException;
 import org.hansung.zigma.domain.promise.exception.CandidateVoteMultipleNotAllowedException;
+import org.hansung.zigma.domain.promise.exception.CandidateVoteNotFoundException;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
 import org.hansung.zigma.domain.promise.exception.PromiseVotingClosedException;
@@ -77,5 +78,28 @@ public class CandidateVoteServiceImpl implements CandidateVoteService {
         // 9. 모든 검증을 통과하면 투표 엔티티를 생성하고 저장
         CandidateVote candidateVote = CandidateVote.createVote(user, candidate);
         candidateVoteRepository.save(candidateVote);
+    }
+
+    @Override
+    @Transactional
+    public void cancelVote(Long userId, Long promiseId, Long candidateId) {
+        // 1. 인증된 사용자 자체가 유효한지 확인
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 해당 사용자가 이 약속의 참여자인지 확인
+        promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        // 3. 요청한 후보지가 실제로 이 약속에 속한 후보지인지 확인
+        candidateRepository.findByIdAndPromiseId(candidateId, promiseId)
+                .orElseThrow(CandidateNotFoundException::new);
+
+        // 4. 내가 직접 한 투표 기록이 있는 경우에만 취소 가능
+        CandidateVote candidateVote = candidateVoteRepository.findByUserIdAndCandidateId(userId, candidateId)
+                .orElseThrow(CandidateVoteNotFoundException::new);
+
+        // 5. 내 투표 기록을 삭제
+        candidateVoteRepository.delete(candidateVote);
     }
 }

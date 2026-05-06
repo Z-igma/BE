@@ -34,4 +34,19 @@ public class CandidateVoteController {
                 .status(HttpStatus.CREATED)
                 .body(SuccessResponse.created(null));
     }
+
+    @DeleteMapping("/{promiseId}/votes/{candidateId}")
+    public ResponseEntity<SuccessResponse<Void>> cancelVote(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId,
+            @PathVariable Long candidateId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        candidateVoteService.cancelVote(userId, promiseId, candidateId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.ok(null));
+    }
 }
