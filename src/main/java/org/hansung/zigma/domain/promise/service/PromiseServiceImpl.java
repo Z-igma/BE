@@ -4,12 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.entity.Promise;
 import org.hansung.zigma.domain.promise.entity.PromiseMember;
 import org.hansung.zigma.domain.promise.entity.Role;
+import org.hansung.zigma.domain.promise.exception.PromiseMemberAccessDeniedException;
+import org.hansung.zigma.domain.promise.exception.PromiseNotFoundException;
 import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.promise.repository.PromiseRepository;
 import org.hansung.zigma.domain.promise.util.CursorUtil;
 import org.hansung.zigma.domain.promise.util.CursorUtil.CursorContents;
 import org.hansung.zigma.domain.promise.util.Validator;
 import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.PromiseDetailRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
 import org.hansung.zigma.domain.user.entity.User;
@@ -29,6 +32,7 @@ public class PromiseServiceImpl implements PromiseService {
 
     private final UserRepository userRepository;
     private final PromiseRepository promiseRepository;
+    private final PromiseMemberRepository promiseMemberRepository;
 
     @Override
     @Transactional
@@ -66,5 +70,19 @@ public class PromiseServiceImpl implements PromiseService {
                 .toList();
 
         return PromiseListRes.of(res, size);
+    }
+
+    @Override
+    public PromiseDetailRes getPromise(Long userId, Long promiseId) {
+        userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        Promise promise = promiseRepository.findDetailById(promiseId)
+                .orElseThrow(PromiseNotFoundException::new);
+
+        promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
+                .orElseThrow(PromiseMemberAccessDeniedException::new);
+
+        return PromiseDetailRes.from(promise);
     }
 }

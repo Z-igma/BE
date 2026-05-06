@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.domain.promise.service.PromiseService;
 import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.PromiseDetailRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
@@ -43,6 +44,20 @@ public class PromiseController {
         Long userId = Long.parseLong(customUserDetails.getUsername());
 
         PromiseListRes res = promiseService.getPromises(userId, cursor, size);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.from(res));
+    }
+
+    @GetMapping("/{promiseId}")
+    public ResponseEntity<SuccessResponse<PromiseDetailRes>> getPromise(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long promiseId
+    ) {
+        Long userId = Long.parseLong(customUserDetails.getUsername());
+
+        PromiseDetailRes res = promiseService.getPromise(userId, promiseId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

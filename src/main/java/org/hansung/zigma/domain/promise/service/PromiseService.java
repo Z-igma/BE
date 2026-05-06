@@ -1,6 +1,7 @@
 package org.hansung.zigma.domain.promise.service;
 
 import org.hansung.zigma.domain.promise.web.dto.PromiseCreateReq;
+import org.hansung.zigma.domain.promise.web.dto.PromiseDetailRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseListRes;
 import org.hansung.zigma.domain.promise.web.dto.PromiseRes;
 
@@ -9,4 +10,6 @@ public interface PromiseService {
     PromiseRes createPromise(Long userId, PromiseCreateReq req);
     // 약속 전체 조회
     PromiseListRes getPromises(Long userId, String encodedCursor, int size);
+    // 약속 단일 조회
+    PromiseDetailRes getPromise(Long userId, Long promiseId);
 }
