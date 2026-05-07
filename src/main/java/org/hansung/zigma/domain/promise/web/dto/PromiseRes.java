@@ -23,7 +23,7 @@ public record PromiseRes(
                 .getDisplayName(TextStyle.SHORT, Locale.KOREAN);
 
         boolean isLeader = promise.getPromiseMembers().stream()
-                .anyMatch(member -> member.getRole().equals(Role.HOST)
+                .anyMatch(member -> member.getRole() == Role.HOST
                         && member.getUser().getId().equals(currentUserId));
 
         return new PromiseRes(
