@@ -50,7 +50,7 @@ public class PromiseServiceImpl implements PromiseService {
 
         Promise savedPromise = promiseRepository.save(promise);
 
-        return PromiseRes.from(savedPromise);
+        return PromiseRes.of(savedPromise, userId);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class PromiseServiceImpl implements PromiseService {
         );
 
         List<PromiseRes> res = promises.stream()
-                .map(PromiseRes::from)
+                .map((Promise promise) -> PromiseRes.of(promise, userId))
                 .toList();
 
         return PromiseListRes.of(res, size);
