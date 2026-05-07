@@ -85,7 +85,7 @@ public class PromiseServiceImpl implements PromiseService {
         promiseMemberRepository.findByUserIdAndPromiseId(userId, promiseId)
                 .orElseThrow(PromiseMemberAccessDeniedException::new);
 
-        return PromiseDetailRes.from(promise);
+        return PromiseDetailRes.of(promise, userId);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.hansung.zigma.domain.promise.web.dto;
 
 import org.hansung.zigma.domain.promise.entity.Promise;
+import org.hansung.zigma.domain.promise.entity.PromiseMember;
 
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
@@ -16,13 +17,13 @@ public record PromiseDetailRes(
         Integer memberCount,
         List<PromiseMemberRes> members
 ) {
-    public static PromiseDetailRes from(Promise promise) {
+    public static PromiseDetailRes of(Promise promise, Long currentUserId) {
         String dayOfWeek = promise.getPromisedAt()
                 .getDayOfWeek()
                 .getDisplayName(TextStyle.SHORT, Locale.KOREAN);
 
         List<PromiseMemberRes> members = promise.getPromiseMembers().stream()
-                .map(PromiseMemberRes::from)
+                .map(member -> PromiseMemberRes.of(member, currentUserId))
                 .toList();
 
         return new PromiseDetailRes(

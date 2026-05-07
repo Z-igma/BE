@@ -8,15 +8,17 @@ public record PromiseMemberRes(
         Long userId,
         String nickName,
         String profileImageUrl,
-        Role role
+        Role role,
+        Boolean isSelf
 ) {
-    public static PromiseMemberRes from(PromiseMember member) {
+    public static PromiseMemberRes of(PromiseMember member, Long currentUserId) {
         User user = member.getUser();
         return new PromiseMemberRes(
                 user.getId(),
                 user.getNickName(),
                 user.getProfileImageUrl(),
-                member.getRole()
+                member.getRole(),
+                user.getId().equals(currentUserId)
         );
     }
 }
