@@ -68,7 +68,7 @@ public class PromiseServiceImpl implements PromiseService {
         );
 
         List<PromiseRes> res = promises.stream()
-                .map((Promise promise) -> PromiseRes.of(promise, userId))
+                .map(promise -> PromiseRes.of(promise, userId))
                 .toList();
 
         return PromiseListRes.of(res, size);
