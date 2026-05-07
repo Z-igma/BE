@@ -1,7 +1,7 @@
 package org.hansung.zigma.domain.promise.web.dto;
 
 import org.hansung.zigma.domain.promise.entity.Promise;
-import org.hansung.zigma.domain.promise.entity.PromiseMember;
+import org.hansung.zigma.domain.promise.entity.Role;
 
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
@@ -14,6 +14,7 @@ public record PromiseDetailRes(
         LocalDateTime promisedAt,
         String dayOfWeek,
         Boolean isMultipleVoting,
+        boolean isLeader,
         Integer memberCount,
         List<PromiseMemberRes> members
 ) {
@@ -21,6 +22,10 @@ public record PromiseDetailRes(
         String dayOfWeek = promise.getPromisedAt()
                 .getDayOfWeek()
                 .getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+
+        boolean isLeader = promise.getPromiseMembers().stream()
+                .anyMatch(member -> member.getRole().equals(Role.HOST)
+                        && member.getUser().getId().equals(currentUserId));
 
         List<PromiseMemberRes> members = promise.getPromiseMembers().stream()
                 .map(member -> PromiseMemberRes.of(member, currentUserId))
@@ -32,6 +37,7 @@ public record PromiseDetailRes(
                 promise.getPromisedAt(),
                 dayOfWeek,
                 promise.getIsMultipleVoting(),
+                isLeader,
                 promise.getPromiseMembers().size(),
                 members
         );
