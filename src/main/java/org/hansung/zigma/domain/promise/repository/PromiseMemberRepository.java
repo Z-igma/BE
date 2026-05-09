@@ -15,4 +15,6 @@ public interface PromiseMemberRepository extends JpaRepository<PromiseMember, Lo
     long countByUserId(Long userId);
 
     long countByUserIdAndRole(Long userId, Role role);
+
+    int countByPromiseId(Long promiseId);
 }
