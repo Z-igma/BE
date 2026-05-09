@@ -44,8 +44,8 @@ public record CandidateVoteRes(
                 .map(Voter::from)
                 .toList();
 
-        boolean isMyVote = candidate.getCandidateVotes().stream()
-                .anyMatch(v -> v.getUser().getId().equals(currentUserId));
+        boolean isMyVote = voters.stream()
+                .anyMatch(v -> v.userId().equals(currentUserId));
 
         boolean isMyCandidate = candidate.getUser().getId().equals(currentUserId);
 
