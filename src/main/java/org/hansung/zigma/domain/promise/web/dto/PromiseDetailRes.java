@@ -1,6 +1,7 @@
 package org.hansung.zigma.domain.promise.web.dto;
 
 import org.hansung.zigma.domain.promise.entity.Promise;
+import org.hansung.zigma.domain.promise.entity.PromiseStatus;
 import org.hansung.zigma.domain.promise.entity.Role;
 
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.util.Locale;
 public record PromiseDetailRes(
         Long id,
         String title,
+        PromiseStatus promiseStatus,
         LocalDateTime promisedAt,
         String dayOfWeek,
         Boolean isMultipleVoting,
@@ -34,6 +36,7 @@ public record PromiseDetailRes(
         return new PromiseDetailRes(
                 promise.getId(),
                 promise.getTitle(),
+                promise.getStatus(),
                 promise.getPromisedAt(),
                 dayOfWeek,
                 promise.getIsMultipleVoting(),
