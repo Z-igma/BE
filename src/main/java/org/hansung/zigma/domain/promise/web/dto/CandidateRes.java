@@ -10,15 +10,10 @@ public record CandidateRes(
         Double longitude,   // 경도
         String address,
         Double distance,
-        Boolean isConfirmed
-
-        /* 투표 관련 데이터
-        Integer voteCount,
-        Integer totalMemberCount,
-        List<String> voterNames
-        */
+        Boolean isConfirmed,
+        CandidateVoteRes voteInfo
 ) {
-    public static CandidateRes from(Candidate candidate) {
+    public static CandidateRes of(Candidate candidate, Long currentUserId) {
         return new CandidateRes(
                 candidate.getId(),
                 candidate.getName(),
@@ -27,7 +22,8 @@ public record CandidateRes(
                 candidate.getLongitude(),
                 candidate.getAddress(),
                 120.0,
-                candidate.getIsConfirmed()
+                candidate.getIsConfirmed(),
+                CandidateVoteRes.of(candidate, currentUserId)
         );
     }
 }
