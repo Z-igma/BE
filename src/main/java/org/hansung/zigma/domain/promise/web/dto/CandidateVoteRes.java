@@ -16,7 +16,7 @@ public record CandidateVoteRes(
 
     public record Creator(
             Long userId,
-            String nickName
+            String nickname
     ) {
         public static Creator from(User user) {
             return new Creator(
@@ -28,7 +28,7 @@ public record CandidateVoteRes(
 
     public record Voter(
             Long userId,
-            String nickName
+            String nickname
     ) {
         public static Voter from(CandidateVote vote) {
             User user = vote.getUser();
