@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS 프리플라이트 요청 허용
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() // OAuth2 로그인 URL
+                        .requestMatchers("/ws", "/ws/**").permitAll() // WebSocket handshake URL
                         .anyRequest().authenticated() // 그 외 나머지는 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
