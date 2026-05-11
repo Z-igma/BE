@@ -19,7 +19,7 @@ public interface CandidateVoteRepository extends JpaRepository<CandidateVote, Lo
 
     boolean existsByUserIdAndPromiseId(Long userId, Long promiseId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("delete from CandidateVote cv where cv.promise.id = :promiseId")
     void deleteAllByPromiseId(@Param("promiseId") Long promiseId);
 }
