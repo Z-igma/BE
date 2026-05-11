@@ -13,6 +13,8 @@ public class CookieOAuth2AuthorizationRequestRepository
 
     private static final String COOKIE_NAME = "oauth2_auth_request";
     public static final String REDIRECT_TARGET_COOKIE = "redirect_target";
+    public static final String TARGET_LOCAL = "local";
+    public static final String TARGET_DEPLOY = "deploy";
     private static final int COOKIE_EXPIRE_SECONDS = 180; // 3분
 
     // 쿠키에서 Authorization Request 조회
@@ -38,8 +40,11 @@ public class CookieOAuth2AuthorizationRequestRepository
                 CookieUtils.serialize(authorizationRequest), COOKIE_EXPIRE_SECONDS);
 
         // Referer 헤더로 출발지(local/deploy) 판단 후 쿠키 저장
+        // contains 대신 startsWith로 호스트 부분만 검사 (http://attacker.com/localhost 같은 케이스 차단)
         String referer = request.getHeader("Referer");
-        String target = (referer != null && referer.contains("localhost")) ? "local" : "deploy";
+        boolean isLocal = referer != null
+                && (referer.startsWith("http://localhost") || referer.startsWith("https://localhost"));
+        String target = isLocal ? TARGET_LOCAL : TARGET_DEPLOY;
         CookieUtils.addCookie(response, REDIRECT_TARGET_COOKIE, target, COOKIE_EXPIRE_SECONDS);
     }
 

@@ -43,8 +43,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String target = CookieUtils.getCookie(request,
                         CookieOAuth2AuthorizationRequestRepository.REDIRECT_TARGET_COOKIE)
                 .map(Cookie::getValue)
-                .orElse("deploy");
-        String redirectUri = "local".equals(target) ? localRedirectUri : deployRedirectUri;
+                .orElse(CookieOAuth2AuthorizationRequestRepository.TARGET_DEPLOY);
+        String redirectUri = CookieOAuth2AuthorizationRequestRepository.TARGET_LOCAL.equals(target)
+                ? localRedirectUri : deployRedirectUri;
 
         CookieUtils.deleteCookie(request, response,
                 CookieOAuth2AuthorizationRequestRepository.REDIRECT_TARGET_COOKIE);
