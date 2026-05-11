@@ -131,8 +131,10 @@ class PromiseServiceImplTest {
         // when: 초대 코드로 약속 참여
         promiseService.joinPromiseByInviteCode(userId, inviteCode);
 
-        // then: MEMBER 권한의 멤버가 새로 저장되어야 함
-        verify(promiseMemberRepository).save(any(PromiseMember.class));
+        // then: Promise aggregate에 MEMBER 권한의 멤버가 추가되어야 함
+        assertThat(promise.getPromiseMembers()).hasSize(1);
+        assertThat(promise.getPromiseMembers().getFirst().getUser()).isEqualTo(user);
+        assertThat(promise.getPromiseMembers().getFirst().getRole()).isEqualTo(Role.MEMBER);
     }
 
     @Test

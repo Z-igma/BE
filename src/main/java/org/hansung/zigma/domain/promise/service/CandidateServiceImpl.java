@@ -1,6 +1,7 @@
 package org.hansung.zigma.domain.promise.service;
 
 import lombok.RequiredArgsConstructor;
+import org.hansung.zigma.domain.notification.event.PromiseConfirmedEvent;
 import org.hansung.zigma.domain.promise.entity.Candidate;
 import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.hansung.zigma.domain.promise.entity.PromiseStatus;
@@ -17,6 +18,7 @@ import org.hansung.zigma.domain.promise.web.dto.CandidateListRes;
 import org.hansung.zigma.domain.promise.web.dto.CandidateRes;
 import org.hansung.zigma.domain.user.exception.UserNotFoundException;
 import org.hansung.zigma.domain.user.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,7 @@ public class CandidateServiceImpl implements CandidateService {
     private final PromiseMemberRepository promiseMemberRepository;
     private final CandidateRepository candidateRepository;
     private final CandidateVoteRepository candidateVoteRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -143,6 +146,15 @@ public class CandidateServiceImpl implements CandidateService {
 
         // 8. 약속 전체 상태도 확정 완료로 변경
         confirmedCandidate.getPromise().confirm();
+
+        eventPublisher.publishEvent(new PromiseConfirmedEvent(
+                confirmedCandidate.getPromise().getId(),
+                confirmedCandidate.getPromise().getTitle(),
+                confirmedCandidate.getPromise().getPromisedAt(),
+                confirmedCandidate.getId(),
+                confirmedCandidate.getName(),
+                confirmedCandidate.getAddress()
+        ));
     }
 
     @Override

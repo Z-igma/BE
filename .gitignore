@@ -8,8 +8,6 @@ build/
 # Spring secret config
 application-secret.properties
 
-# Local WebSocket test page
-src/main/resources/static/presence-test.html
 
 ### STS ###
 .apt_generated

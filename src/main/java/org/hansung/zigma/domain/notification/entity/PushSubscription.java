@@ -76,7 +76,8 @@ public class PushSubscription extends BaseEntity {
                 .build();
     }
 
-    public void updateKeys(String p256dh, String auth, String userAgent) {
+    public void renew(User user, String p256dh, String auth, String userAgent) {
+        this.user = user;
         this.p256dh = p256dh;
         this.auth = auth;
         this.userAgent = userAgent;

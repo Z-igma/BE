@@ -1,5 +1,6 @@
 package org.hansung.zigma.domain.promise.service;
 
+import org.hansung.zigma.domain.notification.event.PromiseConfirmedEvent;
 import org.hansung.zigma.domain.promise.entity.Candidate;
 import org.hansung.zigma.domain.promise.entity.CandidateVote;
 import org.hansung.zigma.domain.promise.entity.Promise;
@@ -20,9 +21,11 @@ import org.hansung.zigma.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -49,6 +52,9 @@ class CandidateServiceImplTest {
 
     @Mock
     private CandidateVoteRepository candidateVoteRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CandidateServiceImpl candidateService;
@@ -84,6 +90,12 @@ class CandidateServiceImplTest {
         assertThat(confirmedCandidate.getIsConfirmed()).isTrue();
         // 약속 전체 상태도 확정 완료로 변경되어야 함
         assertThat(promise.getStatus()).isEqualTo(PromiseStatus.CONFIRMED);
+
+        ArgumentCaptor<PromiseConfirmedEvent> eventCaptor = ArgumentCaptor.forClass(PromiseConfirmedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().promiseId()).isEqualTo(promiseId);
+        assertThat(eventCaptor.getValue().candidateId()).isEqualTo(confirmedCandidateId);
+        assertThat(eventCaptor.getValue().candidateName()).isEqualTo(confirmedCandidate.getName());
     }
 
     @Test

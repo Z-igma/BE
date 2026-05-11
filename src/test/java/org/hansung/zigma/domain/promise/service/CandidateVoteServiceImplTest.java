@@ -356,10 +356,10 @@ class CandidateVoteServiceImplTest {
         // 투표 정책(true/false)만 바꿔가며 재사용할 수 있게 약속 fixture 생성
         Promise promise = Promise.builder()
                 .title("test promise")
-                .promisedAt(LocalDateTime.of(2026, 5, 10, 18, 0))
+                .promisedAt(LocalDateTime.now().plusDays(1))
                 .category(org.hansung.zigma.domain.promise.entity.Category.MEAL)
                 .isMultipleVoting(isMultipleVoting)
-                .endAt(LocalDateTime.of(2026, 5, 10, 17, 0))
+                .endAt(LocalDateTime.now().plusHours(1))
                 .status(status)
                 .build();
         ReflectionTestUtils.setField(promise, "id", promiseId);
