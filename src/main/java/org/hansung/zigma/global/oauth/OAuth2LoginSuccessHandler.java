@@ -1,10 +1,12 @@
 package org.hansung.zigma.global.oauth;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.hansung.zigma.global.jwt.CustomUserDetails;
 import org.hansung.zigma.global.jwt.JwtTokenProvider;
+import org.hansung.zigma.global.util.CookieUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -20,8 +22,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Value("${app.oauth2.front-redirect-uri}")
-    private String redirectUri;
+    @Value("${app.oauth2.front-redirect-uri.local}")
+    private String localRedirectUri;
+
+    @Value("${app.oauth2.front-redirect-uri.deploy}")
+    private String deployRedirectUri;
 
     @Override
     public void onAuthenticationSuccess(
@@ -33,6 +38,16 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String accessToken = jwtTokenProvider.createAccessToken(
                 userDetails.getUser().getId().toString()
         );
+
+        // 출발지(local/deploy) 쿠키 보고 리다이렉트 URI 선택, 누락 시 deploy 폴백
+        String target = CookieUtils.getCookie(request,
+                        CookieOAuth2AuthorizationRequestRepository.REDIRECT_TARGET_COOKIE)
+                .map(Cookie::getValue)
+                .orElse("deploy");
+        String redirectUri = "local".equals(target) ? localRedirectUri : deployRedirectUri;
+
+        CookieUtils.deleteCookie(request, response,
+                CookieOAuth2AuthorizationRequestRepository.REDIRECT_TARGET_COOKIE);
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("accessToken", accessToken)

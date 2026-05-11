@@ -12,6 +12,7 @@ public class CookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final String COOKIE_NAME = "oauth2_auth_request";
+    public static final String REDIRECT_TARGET_COOKIE = "redirect_target";
     private static final int COOKIE_EXPIRE_SECONDS = 180; // 3분
 
     // 쿠키에서 Authorization Request 조회
@@ -30,10 +31,16 @@ public class CookieOAuth2AuthorizationRequestRepository
             HttpServletResponse response) {
         if (authorizationRequest == null) {
             CookieUtils.deleteCookie(request, response, COOKIE_NAME);
+            CookieUtils.deleteCookie(request, response, REDIRECT_TARGET_COOKIE);
             return;
         }
         CookieUtils.addCookie(response, COOKIE_NAME,
                 CookieUtils.serialize(authorizationRequest), COOKIE_EXPIRE_SECONDS);
+
+        // Referer 헤더로 출발지(local/deploy) 판단 후 쿠키 저장
+        String referer = request.getHeader("Referer");
+        String target = (referer != null && referer.contains("localhost")) ? "local" : "deploy";
+        CookieUtils.addCookie(response, REDIRECT_TARGET_COOKIE, target, COOKIE_EXPIRE_SECONDS);
     }
 
     // 쿠키에서 Authorization Request 꺼내고 삭제
@@ -43,6 +50,7 @@ public class CookieOAuth2AuthorizationRequestRepository
             HttpServletResponse response) {
         OAuth2AuthorizationRequest authorizationRequest = loadAuthorizationRequest(request);
         CookieUtils.deleteCookie(request, response, COOKIE_NAME);
+        // REDIRECT_TARGET_COOKIE는 SuccessHandler에서 사용 후 삭제
         return authorizationRequest;
     }
 }
