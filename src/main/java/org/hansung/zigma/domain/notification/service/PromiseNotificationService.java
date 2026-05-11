@@ -37,7 +37,7 @@ public class PromiseNotificationService {
     private final NotificationRepository notificationRepository;
     private final PushSubscriptionRepository pushSubscriptionRepository;
     private final WebPushSender webPushSender;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)

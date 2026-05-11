@@ -1,5 +1,6 @@
 package org.hansung.zigma.domain.notification.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hansung.zigma.domain.notification.entity.Notification;
 import org.hansung.zigma.domain.notification.entity.NotificationType;
 import org.hansung.zigma.domain.notification.entity.PushSubscription;
@@ -14,6 +15,7 @@ import org.hansung.zigma.domain.promise.repository.PromiseMemberRepository;
 import org.hansung.zigma.domain.user.entity.User;
 import org.hansung.zigma.domain.user.entity.UserProvider;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -48,8 +50,18 @@ class PromiseNotificationServiceTest {
     @Mock
     private WebPushSender webPushSender;
 
-    @InjectMocks
     private PromiseNotificationService promiseNotificationService;
+
+    @BeforeEach
+    void setUp() {
+        promiseNotificationService = new PromiseNotificationService(
+                promiseMemberRepository,
+                notificationRepository,
+                pushSubscriptionRepository,
+                webPushSender,
+                new ObjectMapper()
+        );
+    }
 
     @Test
     @DisplayName("약속 장소 확정 이벤트가 오면 멤버들의 활성 구독으로 웹 푸시를 발송하고 알림 이력을 저장한다")
