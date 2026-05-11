@@ -21,7 +21,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns(
                         "http://localhost:5173",
                         "http://localhost:8080",
-                        "https://z-igma.netlify.app"
+                        "https://z-igma.netlify.app",
+                        "https://z-igma.vercel.app"
                 );
     }
 
