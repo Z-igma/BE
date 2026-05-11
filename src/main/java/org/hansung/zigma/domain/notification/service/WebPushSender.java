@@ -1,5 +1,6 @@
 package org.hansung.zigma.domain.notification.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.PushService;
@@ -16,21 +17,34 @@ import java.nio.charset.StandardCharsets;
 public class WebPushSender {
 
     private final WebPushProperties properties;
+    private PushService pushService;
 
-    public WebPushSendResult send(PushSubscription subscription, String payload) {
+    @PostConstruct
+    public void init() {
         if (!properties.isEnabled()) {
-            log.info("Web Push is disabled because VAPID properties are not configured. subscriptionId={}",
-                    subscription.getId());
-            return new WebPushSendResult(false, null);
+            log.info("Web Push is disabled because VAPID properties are not configured.");
+            return;
         }
 
         try {
-            PushService pushService = new PushService(
+            this.pushService = new PushService(
                     properties.getVapidPublicKey(),
                     properties.getVapidPrivateKey(),
                     properties.getVapidSubject()
             );
+            log.info("Web Push PushService initialized.");
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to initialize Web Push PushService.", e);
+        }
+    }
 
+    public WebPushSendResult send(PushSubscription subscription, String payload) {
+        if (pushService == null) {
+            log.info("Web Push is disabled. subscriptionId={}", subscription.getId());
+            return new WebPushSendResult(false, null);
+        }
+
+        try {
             nl.martijndwars.webpush.Notification notification = new nl.martijndwars.webpush.Notification(
                     subscription.getEndpoint(),
                     subscription.getP256dh(),
