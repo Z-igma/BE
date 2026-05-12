@@ -57,6 +57,9 @@ public class CandidateServiceImpl implements CandidateService {
         );
         Candidate savedCandidate = candidateRepository.save(candidate);
 
+        // 첫 후보지가 등록되면 약속 상태를 진행 중으로 전환
+        pm.getPromise().proceed();
+
         return CandidateRes.of(savedCandidate, userId);
     }
 
@@ -106,6 +109,11 @@ public class CandidateServiceImpl implements CandidateService {
         }
 
         candidateRepository.delete(candidate);
+
+        // 마지막 후보지 삭제 시 약속 상태를 다시 장소 미정으로 되돌림
+        if (candidateRepository.countByPromiseId(promiseId) == 0) {
+            candidate.getPromise().pend();
+        }
     }
 
     @Override

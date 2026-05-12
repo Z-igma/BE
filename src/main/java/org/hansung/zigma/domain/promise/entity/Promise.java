@@ -85,6 +85,18 @@ public class Promise extends BaseEntity {
         this.status = PromiseStatus.CONFIRMED;
     }
 
+    public void proceed() {
+        if (this.status == PromiseStatus.PENDING) {
+            this.status = PromiseStatus.PROCEEDING;
+        }
+    }
+
+    public void pend() {
+        if (this.status == PromiseStatus.PROCEEDING) {
+            this.status = PromiseStatus.PENDING;
+        }
+    }
+
     public void startRevote(LocalDateTime endAt) {
         this.isMultipleVoting = false;
         this.endAt = endAt;

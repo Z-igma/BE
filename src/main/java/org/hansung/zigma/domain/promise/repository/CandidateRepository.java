@@ -15,4 +15,6 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
     List<Candidate> findAllByPromiseIdAndIsActiveTrue(Long promiseId);
 
     Optional<Candidate> findByIdAndPromiseId(Long candidateId, Long promiseId);
+
+    long countByPromiseId(Long promiseId);
 }
