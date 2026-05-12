@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.PushService;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.hansung.zigma.domain.notification.config.WebPushProperties;
 import org.hansung.zigma.domain.notification.entity.PushSubscription;
 import org.springframework.stereotype.Component;
@@ -58,14 +59,27 @@ public class WebPushSender {
             if (statusCode >= 200 && statusCode < 300) {
                 log.info("Web Push sent. subscriptionId={}, statusCode={}", subscription.getId(), statusCode);
             } else {
-                log.warn("Web Push failed with response status. subscriptionId={}, statusCode={}",
+                log.warn("Web Push failed with response status. subscriptionId={}, statusCode={}, responseBody={}",
                         subscription.getId(),
-                        statusCode);
+                        statusCode,
+                        readResponseBody(response));
             }
             return new WebPushSendResult(statusCode >= 200 && statusCode < 300, statusCode);
         } catch (Exception e) {
             log.warn("Failed to send web push. subscriptionId={}", subscription.getId(), e);
             return new WebPushSendResult(false, null);
+        }
+    }
+
+    private String readResponseBody(HttpResponse response) {
+        if (response.getEntity() == null) {
+            return "";
+        }
+
+        try {
+            return EntityUtils.toString(response.getEntity());
+        } catch (Exception e) {
+            return "Failed to read response body: " + e.getMessage();
         }
     }
 }
