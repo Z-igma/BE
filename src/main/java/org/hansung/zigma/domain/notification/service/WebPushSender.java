@@ -3,6 +3,7 @@ package org.hansung.zigma.domain.notification.service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.martijndwars.webpush.Encoding;
 import nl.martijndwars.webpush.PushService;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -54,7 +55,7 @@ public class WebPushSender {
                     properties.getTtlSeconds()
             );
 
-            HttpResponse response = pushService.send(notification);
+            HttpResponse response = pushService.send(notification, Encoding.AES128GCM);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode >= 200 && statusCode < 300) {
                 log.info("Web Push sent. subscriptionId={}, statusCode={}", subscription.getId(), statusCode);
